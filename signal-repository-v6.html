@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Repository</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #22263a;
+    --bg4: #2c3150;
+    --border: #333a5c;
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --text: #e8eaf6;
+    --text2: #9ba3c7;
+    --text3: #6b7399;
+    --success: #4caf7d;
+    --warning: #f5a623;
+    --danger: #e05555;
+    --tab-active: #4f8ef7;
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+    --radius: 8px;
+    --divider: #2a2f4a;
+  }
+  .light-mode {
+    --bg: #f4f6fb;
+    --bg2: #ffffff;
+    --bg3: #e8ecf5;
+    --bg4: #d0d7ee;
+    --border: #c5cbdf;
+    --accent: #2563eb;
+    --accent2: #7c3abf;
+    --text: #1a1d2e;
+    --text2: #4a5280;
+    --text3: #8891b0;
+    --success: #1e7e4f;
+    --warning: #b07600;
+    --danger: #c0392b;
+    --tab-active: #2563eb;
+    --divider: #c5cbdf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 13px; }
+  .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 48px; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .app-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .theme-toggle { background: var(--bg3); border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 4px 12px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+  .theme-toggle:hover { background: var(--bg4); }
+  .unsaved-badge { display: none; background: var(--warning); color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .unsaved-badge.visible { display: inline-block; }
+  .tabs-bar { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 20px; }
+  .tab-btn { padding: 10px 22px; cursor: pointer; border: none; background: none; color: var(--text2); font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-btn.active { color: var(--tab-active); border-bottom-color: var(--tab-active); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .tab-content { display: none !important; }
+  .tab-content.active { display: flex !important; flex-direction: column; }
+  .btn { border: none; border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.15); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--bg4); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { filter: brightness(1.15); }
+  .btn-sm { padding: 4px 9px; font-size: 11px; }
+  .btn-success { background: var(--success); color: #fff; }
+  input, select, textarea { background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; outline: none; transition: border 0.2s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input[type=checkbox] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent); }
+  [title] { cursor: help; }
+  .split-container { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+  /* split-top handled in extra_css */
+  .split-divider { height: 6px; background: var(--divider); cursor: ns-resize; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+  .split-divider:hover { background: var(--accent); }
+  .split-divider-dots { color: var(--text3); font-size: 16px; line-height: 1; letter-spacing: 2px; user-select: none; }
+  .split-bottom { overflow: auto; padding: 10px 20px 16px; flex: 1; background: var(--bg); }
+  .search-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-input-wrap input { width: 100%; padding-left: 28px; }
+  .search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; }
+  .results-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 3px 10px; font-size: 11px; color: var(--text2); white-space: nowrap; }
+  .saved-searches-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+  .saved-searches-row select { font-size: 12px; padding: 4px 8px; }
+  .col-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 5px; margin-bottom: 10px; }
+  .col-filter-chip { display: flex; align-items: center; gap: 3px; background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 6px; min-width: 0; }
+  .col-filter-chip label { color: var(--text2); font-size: 10px; cursor: pointer; white-space: nowrap; max-width: 68px; overflow: hidden; text-overflow: ellipsis; }
+  .col-filter-chip .filter-value { width: 62px; font-size: 11px; padding: 2px 4px; min-width: 0; flex: 1; }
+  .col-filter-chip .margin-wrap { display: none; align-items: center; gap: 3px; margin-left: 4px; }
+  .col-filter-chip .margin-wrap.visible { display: flex; }
+  .col-filter-chip .margin-pct { width: 44px; font-size: 11px; }
+  .results-export-bar { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .table-wrap { overflow: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: max-content; border-collapse: collapse; min-width: 100%; table-layout: auto; }
+table td, table th { overflow: hidden; text-overflow: ellipsis; }
+  th { background: var(--bg3); color: var(--text2); font-weight: 600; font-size: 11px; padding: 7px 10px; text-align: left; position: sticky; top: 0; z-index: 2; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--accent); }
+  th .sort-icon { font-size: 10px; margin-left: 3px; }
+  td { padding: 6px 10px; border-top: 1px solid var(--border); font-size: 12px; white-space: nowrap; }
+  tr:hover td { background: var(--bg3); }
+  .highlight { background: var(--accent) !important; color: #fff !important; border-radius: 3px; padding: 0 2px; }
+  .row-detail-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 0; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-width: 340px; max-width: 600px; width: 90%; max-height: 80vh; overflow: auto; box-shadow: var(--shadow); }
+  .modal h3 { font-size: 14px; margin-bottom: 14px; color: var(--accent); }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+  .modal-field label { font-size: 10px; color: var(--text3); display: block; margin-bottom: 2px; }
+  .modal-field span { font-size: 13px; color: var(--text); }
+  .modal-close { float: right; background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; line-height: 1; }
+  #tab2 { padding: 16px 20px; height: calc(100vh - 88px); overflow: auto; }
+  .repo-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .repo-toolbar-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .import-menu { position: relative; display: inline-block; }
+  .import-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); z-index: 50; min-width: 130px; box-shadow: var(--shadow); }
+  .import-dropdown.open { display: block; }
+  .import-dropdown a { display: block; padding: 8px 14px; color: var(--text); text-decoration: none; font-size: 12px; cursor: pointer; }
+  .import-dropdown a:hover { background: var(--bg3); }
+  .export-menu { position: relative; display: inline-block; }
+  .export-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); z-index: 50; min-width: 130px; box-shadow: var(--shadow); }
+  .export-dropdown.open { display: block; }
+  .export-dropdown a { display: block; padding: 8px 14px; color: var(--text); text-decoration: none; font-size: 12px; cursor: pointer; }
+  .export-dropdown a:hover { background: var(--bg3); }
+  .color-rules-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+  .color-rules-panel h4 { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+  .color-rules-list { display: flex; flex-direction: column; gap: 6px; }
+  .color-rule-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .color-rule-row select, .color-rule-row input { font-size: 11px; padding: 3px 6px; }
+  .color-rule-row input[type=color] { width: 32px; height: 26px; padding: 0; border: none; background: none; cursor: pointer; }
+  .color-rule-row .btn-sm { font-size: 11px; }
+  .repo-table-wrap { overflow: auto; border-radius: var(--radius); border: 1px solid var(--border); flex: 1; min-height: 0; }
+.repo-table-wrap table th { font-size: 11px; padding: 7px 8px; position: relative; overflow: hidden; }
+  .repo-table-wrap table td { padding: 5px 8px; font-size: 12px; }
+.repo-table-wrap td input, .repo-table-wrap td select { background: transparent; border: 1px solid transparent; padding: 2px 4px; width: 100%; min-width: 0; box-sizing: border-box; }
+.repo-table-wrap table th:first-child,
+.repo-table-wrap table td:first-child { width: 38px; min-width: 38px; max-width: 38px; text-align: center; }
+  .repo-table-wrap td input:focus, .repo-table-wrap td select:focus { border-color: var(--accent); background: var(--bg3); }
+  .star-btn { background: none; border: none; font-size: 15px; cursor: pointer; color: var(--text3); padding: 0; line-height: 1; }
+  .star-btn.active { color: var(--warning); }
+  .row-del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0; }
+  .add-col-btn { background: var(--bg3); border: 1px dashed var(--border); color: var(--text2); padding: 5px 10px; font-size: 12px; cursor: pointer; border-radius: 6px; }
+  .add-col-btn:hover { background: var(--bg4); color: var(--text); }
+  .repo-col-filter-row td { padding: 2px 4px; }
+  .repo-col-filter-row input { width: 100%; font-size: 11px; padding: 2px 5px; }
+  .type-badge { font-size: 9px; color: var(--text3); margin-left: 3px; }
+  .history-panel { position: fixed; right: 0; top: 48px; width: 280px; height: calc(100vh - 48px); background: var(--bg2); border-left: 1px solid var(--border); padding: 14px; overflow: auto; z-index: 80; transform: translateX(100%); transition: transform 0.25s; }
+  .history-panel.open { transform: translateX(0); }
+  .history-panel h4 { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+  .history-item { font-size: 11px; padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .history-item strong { color: var(--text); }
+  .diff-modal { max-width: 90vw; width: 900px; }
+  .diff-table-wrap { overflow: auto; max-height: 60vh; }
+  .diff-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+  .diff-table th { background: var(--bg3); padding: 5px 8px; text-align: left; font-size: 10px; color: var(--text2); }
+  .diff-table td { padding: 4px 8px; border-top: 1px solid var(--border); }
+  .diff-new { background: rgba(76,175,125,0.12); }
+  .diff-changed { background: rgba(245,166,35,0.12); }
+  .diff-same { background: transparent; }
+  .diff-cell-changed { color: var(--warning); font-weight: 600; }
+  .add-col-modal { max-width: 360px; }
+  .form-field { margin-bottom: 12px; }
+  .form-field label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .form-field input, .form-field select { width: 100%; }
+  .notif { position: fixed; bottom: 20px; right: 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 12px; color: var(--text); box-shadow: var(--shadow); z-index: 300; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+  .notif.show { opacity: 1; transform: translateY(0); }
+  .notif.success { border-color: var(--success); }
+  .notif.error { border-color: var(--danger); }
+  .pinned-row td { background: rgba(79,142,247,0.06) !important; }
+  .kbd { display: inline-block; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-size: 10px; color: var(--text3); }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .col-resizer {
+    position: absolute;
+    right: 0; top: 0;
+    width: 5px; height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 10;
+  }
+  .col-resizer:hover, .col-resizer.resizing { background: var(--accent); }
+
+  /* === SEARCH TAB LAYOUT === */
+  .split-top { overflow: hidden; padding: 14px 0 0 0; background: var(--bg2); display: flex; flex-direction: column; flex-shrink: 0; min-height: 80px; }
+  .search-top-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .search-left-pane {
+    min-width: 0;
+    overflow: auto;
+    padding: 0 12px 12px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .map-pane {
+    position: relative;
+    background: var(--bg3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  #mapContainer { flex: 1; width: 100%; min-height: 0; }
+  .map-toolbar {
+    position: absolute; top: 8px; right: 8px;
+    z-index: 500;
+    display: flex; flex-direction: column; gap: 5px; align-items: flex-end;
+    pointer-events: none;
+  }
+  .map-toolbar > * { pointer-events: all; }
+  .map-chip {
+    background: rgba(10,12,22,0.80); color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 999px; padding: 3px 10px;
+    font-size: 11px; backdrop-filter: blur(4px); white-space: nowrap;
+  }
+  .light-mode .map-chip { background: rgba(255,255,255,0.88); color: var(--text); border-color: var(--border); }
+  .map-btn-row { display: flex; gap: 5px; }
+  .map-area-active-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(79,142,247,0.18);
+    border-top: 1px solid var(--accent);
+    padding: 4px 10px;
+    font-size: 11px; color: var(--accent);
+    display: flex; align-items: center; gap: 8px;
+    z-index: 450;
+  }
+  .map-row-pin { display: flex; align-items: center; justify-content: center; }
+  .map-pin-cb { width:14px; height:14px; accent-color: var(--accent); cursor: pointer; }
+  .map-pin-cb:disabled { opacity: 0.28; cursor: not-allowed; }
+
+  /* === COLUMN DRAG REORDER === */
+  th[draggable="true"] { user-select: none; }
+  th[draggable="true"]:not(.no-drag) { cursor: grab; }
+  th.drag-over { outline: 2px dashed var(--accent); outline-offset: -2px; background: rgba(79,142,247,0.15) !important; }
+  th.drag-source { opacity: 0.4; }
+
+  /* === CONFIG TAB === */
+  .cfg-wrap { padding: 18px 20px; height: calc(100vh - 88px); overflow: auto; }
+  .cfg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 14px; }
+  .cfg-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .cfg-card h4 { font-size: 13px; color: var(--accent); margin-bottom: 12px; }
+  .cfg-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .cfg-field label { font-size: 11px; color: var(--text2); }
+  .cfg-note { font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.5; }
+  .cfg-chk-row { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .search-top-grid { grid-template-columns: 1fr; overflow: auto; }
+    .map-pane { min-height: 260px; height: 260px; }
+  }
+
+
+  .map-popup .leaflet-popup-content-wrapper { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); }
+  .map-popup .leaflet-popup-tip { background: var(--bg2); }
+  .map-popup .leaflet-popup-close-button { color: var(--text3) !important; }
+
+
+  /* Filter scale support */
+  #colFilters { transform-origin: top left; }
+
+  /* Icon rules list */
+  .icon-rule-row { display:flex; align-items:center; gap:8px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:6px 10px; flex-wrap:wrap; }
+  .icon-rule-preview { width:28px; height:28px; object-fit:contain; border-radius:4px; background:var(--bg4); }
+
+  /* Modified cell */
+  td.cell-modified { font-size:10px !important; color:var(--text3) !important; white-space:nowrap; }
+
+</style>
+
+<script type="text/javascript" nonce="93c93be58b074631907955c4a1a" src="//injections.adguard.org?ts=1778368059600&amp;type=content-script&amp;dmn=ppl-ai-code-interpreter-files.s3.amazonaws.com&amp;url=https%3A%2F%2Fppl-ai-code-interpreter-files.s3.amazonaws.com%2Fweb%2Fdirect-files%2Fab0987fae57785bda9bead495c005f11%2F9bd92769-6a0b-4943-8a6b-efe1513ee025%2F972bfe34.html%3Fresponse-content-disposition%3Dattachment%253B%2520filename%253D%2522signal-repository-v6.html%2522%253B%2520filename%252A%253DUTF-8%2527%2527signal-repository-v6.html%26AWSAccessKeyId%3DASIA2F3EMEYE7MJPAJ57%26Signature%3DxCkiOM2xISatK4eV0Hc55mqbBC8%253D%26x-amz-security-token%3DIQoJb3JpZ2luX2VjECcaCXVzLWVhc3QtMSJHMEUCIQCcpdgIdOJX1v6%252FxjmgpUSkCSv%252FbpCSnOzxo545lbCl4gIgbDJbjynmAqx0VAaWDIJBbs6iA3xneLXOXsNDX8R06uwq%252FAQI8P%252F%252F%252F%252F%252F%252F%252F%252F%252F%252FARABGgw2OTk3NTMzMDk3MDUiDMiG9jCNaznN04X%252BuSrQBEc3K8Y%252F6BWEjrR7oDT2RLETcflgyiLJz2xF%252FWTp%252Fn9%252BilE8yedsUqe1MTv%252FP%252BvRUIzXDw%252BtXW6iZ5A3rPGdJUzkyCpsNRJihffIQGoh9mjgxJYq71duz5uC6OLsOz1O5IhxX1KkkiDQOT3YqJ%252FRssF6gduSwH3UW%252Fm0RgLN8Z3%252B3YNb1hRc5IXIsMyYpsa5fzrRZqP6H9%252FmrMZ4H3UiPxzGvhcEkrjb3KzzKBApi%252Fihft40z1iaRAE3qfKNAvyOqehCf5DnsMPN%252BbuI9rVkfZPfvLRUfcpiYd2HoiYW4QLTbWRQW4Rdq4vJU6R6vuxBXFNNvD%252FfLFZTtN%252FpwFSZ%252FU%252BZb14aKPXxQITW0UChIZ%252BTmrXpIHlMkWvXLpKgNRictoST%252FpMKgs2NROuouJhhXdJh7mksqy6jqc1rDPw914tAW4FALrvcW%252BcobDQxEWYVwwXD%252Bpzkmk6rNQnRIYIOH%252FP7Rqkg6NwM9JhKR93Wcy7rIL9JLSoI5p87Wgppf4oAywzYIAxTBHT6Z306uXHa3yv87mlTsaAWOdMe8KEE7mV5gKYS%252FyyQAC0DL2FtmokAL2QV8D1UfR197QRwyvOj5efvmA2wdXxaRYK8SWxOgjz1EQ1uLtuF00OfL0wP0eILKcExAi1P4Jlklpxm32qObylyeWjuJuxP%252BxEj9AQBFu0hJ%252F1jVfQAlXGIRmgzcoD8dUS6K3YrBBsHvCXcbIxlzyk7bwnG7CEJNC1nC9%252FV2TgXkd8CsPjaxtm26ZJUIu4pLBX1TwvCYMXV7apBh7YVqo8w5vb%252BzwY6mAGrhwsR9xM%252BEcMuVppP%252FIhMiSDhW9mHA15BiDF5ZvWjUKwFrQbanUwiNmllxarlri5Nra7Yv8JJc6wYs9l%252B1R9eK%252FzBThdWxZX%252B9X9vkW7VKdk6UgO3h2W89EXnvtDBBOgXEQTENSnm2wn3nmrSY2C8OLrcxF%252F%252FSgTM4085P9MTTR5xQN9PoeyhXY3YDZlXmyZg0WiVEdlPbw%253D%253D%26Expires%3D1778369128&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="93c93be58b074631907955c4a1a" src="//injections.adguard.org?ts=1778368059600&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script><script type="text/javascript" nonce="93c93be58b074631907955c4a1a" src="//injections.adguard.org?ts=1778362656150&amp;type=content-script&amp;dmn=ppl-ai-code-interpreter-files.s3.amazonaws.com&amp;url=https%3A%2F%2Fppl-ai-code-interpreter-files.s3.amazonaws.com%2Fweb%2Fdirect-files%2F32685beb521c0cf44b61cc5386b59575%2Fd47e2f5b-d255-4bb8-b72e-7b8b35611f28%2F5697dd52.html%3Fresponse-content-disposition%3Dattachment%253B%2520filename%253D%2522signal-repository-v3.html%2522%253B%2520filename%252A%253DUTF-8%2527%2527signal-repository-v3.html%26AWSAccessKeyId%3DASIA2F3EMEYE7V5FSOXC%26Signature%3DBbxcglIKyZYURMdvNEQLVDTsJ%252BE%253D%26x-amz-security-token%3DIQoJb3JpZ2luX2VjECYaCXVzLWVhc3QtMSJGMEQCIG8lio7mQGhc6jtYU64PQLkqmGsfE3ptssQIQdjv6DtwAiBrCws%252By0p5mPRJY19plA1joHTcNszsXSZb4YEY8Wz6Fyr8BAjv%252F%252F%252F%252F%252F%252F%252F%252F%252F%252F8BEAEaDDY5OTc1MzMwOTcwNSIMJjt%252B2ZfXGbqiOTYHKtAEA0rKlwNMufn154lcETVS4%252FM6ZTsdO%252BppzrmUJGMrkVslWJsyhnx18QzQQPO1o0fSP1h%252Bi3TOdSWPmpWwFRwUi5M5KhTjSjKTdI1GMUn6uFBNrrz%252FDo9xUFKzzozkQevnrKl0Eoa%252BxVwuh%252BWpHGYFJEtMwn2UrjJRQF6UnF%252FtHgH7jKgQnvYic5J9VIFyetLeInmBW6PA0NfuXC5nKJ48V0RrZxbhLfCgHRfG%252Bsc32qJCWWXn0IHFI58fCBxNH2RDYNiUQDEc%252Fnso4EDCsu9%252Fsh72X7eptJU6I8CqFLV3hlOZDC%252B1kFD8ryIzvpE4lU1Hh4PuyLoQbF30qF6VTUM40OylZVLZi6eL4Cgj41gc0XhgHCDqxMg5J%252F8yZMFnY3wvWK1Del%252BwegRDjSSA%252FmaY%252BRmpBnjYSspR%252FYHmxqGwEOI4%252BcmlUPCFijZyC8tYddfY4qCQZZB3RfgY2Aol8TD6QTyIEIczjh6VWVNWow0BqwfGA9OduQHxezblyIixOScSVgLYAzNKBK5gPYKv8X2VyDUPaDtDtmXh9DLUcZBmUOUQiVq2wazek7scuck4S4507Z3P5IdxJ6FbA0N7bTLJXMcIPvr2Wv2ZB5SUgeMFCZDtq9Ovxgo489h9%252FvP9a2EieVy8%252BoYActvbKRrdtr6czLIsI0zkEjoGQxrl%252BmobBFtjbbCgQr8CcfVTxgLvbi2Iq04T0LU3ULl0uZHQOJBVv2ivLi2%252Bp2d3f7TCNlvu1TxNhq1nISP2mS%252FQJxR89nSBMOKRvYbRLLhVX47PgeBmXjDry%252F7PBjqZAdqiGv7zwZKq1mDFE%252FxIYhSkRvWtrU1aR8ovpeJQqFO94aJpLL90tG2ozxPoeMdJuj%252FIpKocvcE2radtmh74PB5gWxwnf7A%252BpwTyU1Ul98urysZ73%252BS1VSEHV3TxWJJqOqUxRRI6qY8zRlAPSvsKOtv7oCviSu%252By2AsiuJ0J%252BpGrmYVugTaQZn4GubTVvry6vfQLUQZD1FTCTQ%253D%253D%26Expires%3D1778364876&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="93c93be58b074631907955c4a1a" src="//injections.adguard.org?ts=1778362656150&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+</head>
+<body>
+
+<header class="app-header">
+  <span class="app-title">⚡ Signal Repository</span>
+  <div class="header-right">
+      <div style="display:flex;align-items:center;gap:5px">
+        <select id="profileSelect" onchange="switchProfile(this.value)" style="font-size:11px;padding:3px 6px;max-width:130px" title="Perfil activo"></select>
+        <button class="btn btn-secondary btn-sm" onclick="openProfileModal()" title="Gestionar perfiles">👤</button>
+      </div>
+    <span class="unsaved-badge" id="unsavedBadge">● Sin guardar</span>
+    <button class="theme-toggle" onclick="toggleTheme()">☀ Modo Claro</button>
+  </div>
+</header>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab(1)" id="tabBtn1">🔍 Búsqueda</button>
+  <button class="tab-btn" onclick="switchTab(2)" id="tabBtn2">🗄 Repositorio</button>
+  <button class="tab-btn" onclick="switchTab(3)" id="tabBtn3">🗺 Configuración</button>
+</div>
+
+<!-- TAB 1 -->
+<div id="tab1" class="tab-content active">
+  <div class="split-container" id="splitContainer">
+    <div class="split-top" id="splitTop" style="height:55%">
+      <div class="search-top-grid">
+        <!-- LEFT: filtros -->
+        <div class="search-left-pane">
+          <div class="saved-searches-row">
+            <span class="section-title">Búsqueda</span>
+            <select id="savedSearchSelect" onchange="loadSavedSearch(this.value)" style="min-width:140px">
+              <option value="">— Búsquedas guardadas —</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="saveCurrentSearch()">💾 Guardar búsqueda</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteSavedSearch()">✕ Eliminar</button>
+            <span class="kbd">Ctrl+F</span> <span style="font-size:11px;color:var(--text3)">foco búsqueda</span>
+          </div>
+          <div class="search-toolbar">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="globalSearch" placeholder="Búsqueda global…" oninput="runSearch()">
+            </div>
+            <span class="results-badge" id="resultsBadge">0 resultados</span>
+            <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px">
+              <input type="checkbox" id="favOnlyChk" onchange="runSearch()"> Solo ⭐
+            </label>
+          </div>
+          <div class="section-title">Filtros por columna</div>
+          <div class="col-filters" id="colFilters"></div>
+        </div>
+        <!-- RIGHT: mapa (mitad derecha) -->
+        <div class="map-pane" id="mapPane">
+          <div id="mapContainer"></div>
+          <div class="map-toolbar">
+            <span class="map-chip" id="mapChip">0 fijos</span>
+            <div class="map-btn-row">
+              <button class="btn btn-secondary btn-sm" onclick="fitMapToCoords()" title="Ajustar vista a puntos visibles">⤢ Ajustar</button>
+              <button class="btn btn-secondary btn-sm" onclick="clearPinnedMarkers()" title="Eliminar puntos fijados">🧹 Limpiar</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportMapImage()" title="Exportar mapa como imagen PNG">📷 PNG</button>
+            </div>
+          </div>
+          <div class="map-area-active-bar" id="mapAreaBar" style="display:none">
+            🔍 Filtro de área activo
+            <button class="btn btn-secondary btn-sm" onclick="mapClearArea()">✕ Quitar filtro</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="split-divider" id="splitDivider">
+      <span class="split-divider-dots">• • •</span>
+    </div>
+    <div class="split-bottom" id="splitBottom">
+      <div class="results-section">
+        <div class="results-export-bar">
+          <span class="section-title" style="margin-bottom:0">Resultados</span>
+          <button class="btn btn-secondary btn-sm" onclick="exportResults('csv')">⬇ CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportResults('pdf')">⬇ PDF</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportResults('xml')">⬇ XML</button>
+        </div>
+        <div class="table-wrap" id="resultsTableWrap">
+          <table id="resultsTable">
+            <thead id="resultsHead"></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div id="tab2" class="tab-content">
+  <div class="repo-toolbar">
+    <div class="repo-toolbar-left">
+      <div class="import-menu" id="importMenu">
+        <button class="btn btn-secondary" onclick="toggleDropdown('importDrop')">⬆ Importar ▾</button>
+        <div class="import-dropdown" id="importDrop">
+          <a onclick="triggerImport('csv')">📄 CSV</a>
+          <a onclick="triggerImport('json')">📋 JSON</a>
+          <a onclick="triggerImport('xml')">📰 XML</a>
+        </div>
+      </div>
+      <div class="export-menu" id="exportMenu">
+        <button class="btn btn-secondary" onclick="toggleDropdown('exportDrop')">⬇ Exportar ▾</button>
+        <div class="export-dropdown" id="exportDrop">
+          <a onclick="exportRepo('csv')">📄 CSV</a>
+          <a onclick="exportRepo('json')">📋 JSON</a>
+          <a onclick="exportRepo('xml')">📰 XML</a>
+          <a onclick="exportRepo('pdf')">📑 PDF</a>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="saveBackup()">💾 Backup</button>
+      <button class="btn btn-secondary" onclick="loadBackup()">📂 Cargar Backup</button>
+      <button class="btn btn-secondary" onclick="toggleHistory()">📜 Historial</button>
+      <button class="btn btn-secondary" onclick="toggleColorRules()">🎨 Colores</button>
+    </div>
+    <button class="btn btn-primary" onclick="addRow()">+ Fila</button>
+    <button class="add-col-btn" onclick="openAddColModal()">+ Columna</button>
+    <button class="btn btn-danger btn-sm" onclick="clearAllRows()" title="Vaciar todo el repositorio" style="margin-left:auto">🗑 Vaciar todo</button>
+  </div>
+  <div class="color-rules-panel" id="colorRulesPanel" style="display:none">
+    <h4>🎨 Reglas de Color por Rango</h4>
+    <div class="color-rules-list" id="colorRulesList"></div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addColorRule()">+ Añadir regla</button>
+  </div>
+  <div class="repo-table-wrap" id="repoTableWrap">
+    <table id="repoTable">
+      <thead id="repoHead"></thead>
+      <tbody id="repoBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div id="tab3" class="tab-content">
+  <div class="cfg-wrap">
+    <div class="cfg-grid">
+      <div class="cfg-card">
+        <h4>🗺 Mapa base</h4>
+        <div class="cfg-field">
+          <label for="cfgTileType">Tipo de mapa</label>
+          <select id="cfgTileType" onchange="updateMapConfig()">
+            <option value="osm">OpenStreetMap (estándar)</option>
+            <option value="topo">OpenTopoMap (topográfico)</option>
+            <option value="satellite">Satélite — Esri World Imagery</option>
+            <option value="dark">Dark — CartoDB Dark Matter</option>
+            <option value="light">Light — CartoDB Positron</option>
+            <option value="local">📁 Tiles locales (configurar URL)</option>
+          </select>
+        </div>
+        <div class="cfg-field">
+          <label for="cfgMapZoom">Zoom inicial</label>
+          <input type="number" id="cfgMapZoom" min="6" max="8" step="1" value="5" onchange="updateMapConfig()">
+        </div>
+        <div class="cfg-chk-row">
+          <input type="checkbox" id="cfgShowTooltips" onchange="updateMapConfig()" checked>
+          <label for="cfgShowTooltips">Mostrar tooltip en puntos fijados</label>
+        </div>
+        <div class="cfg-chk-row">
+          <input type="checkbox" id="cfgAutoFit" onchange="updateMapConfig()">
+          <label for="cfgAutoFit">Ajustar vista automáticamente al buscar</label>
+        </div>
+                <div class="cfg-field" id="localTileUrlField" style="display:none">
+          <label for="cfgLocalTileUrl">URL tiles locales (usa {z}/{x}/{y})</label>
+          <input type="text" id="cfgLocalTileUrl" placeholder="tiles/{z}/{x}/{y}.png" oninput="updateLocalTileUrl()" style="font-family:monospace;font-size:11px">
+          <span style="font-size:10px;color:var(--text3)">Ejemplos: tiles/{z}/{x}/{y}.png · http://localhost:8080/styles/osm/{z}/{x}/{y}.png</span>
+        </div>
+        <p class="cfg-note">⚠️ Tiles online requieren conexión. Para tiles locales selecciona "📁 Tiles locales" e introduce la ruta.</p>
+      </div>
+      <div class="cfg-card">
+        <h4>🔎 Tamaño de filtros</h4>
+        <div class="cfg-field">
+          <label for="cfgFilterScale">Escala de chips de filtro</label>
+          <input type="range" id="cfgFilterScale" min="0.75" max="1.5" step="0.05" value="1"
+            oninput="filterScale=parseFloat(this.value);document.getElementById('cfgFilterScaleVal').textContent=Math.round(filterScale*100)+'%';applyFilterScale()">
+          <span id="cfgFilterScaleVal" style="font-size:11px;color:var(--text2)">100%</span>
+        </div>
+        <p class="cfg-note">Ajusta el tamaño de los chips y campos de los filtros de búsqueda.</p>
+      </div>
+      <div class="cfg-card" style="grid-column:1/-1">
+        <h4>👁 Columnas visibles en Resultados</h4>
+        <div id="hiddenColsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-top:4px"></div>
+        <p class="cfg-note">Marca las columnas que quieres <strong>ocultar</strong> en la vista de resultados (el repositorio no se ve afectado).</p>
+      </div>
+      <div class="cfg-card" style="grid-column:1/-1">
+        <h4>🖼 Iconos personalizados en el mapa</h4>
+        <p class="cfg-note" style="margin-bottom:10px">Importa una imagen y asígnale IDs de emisor o rangos de frecuencia (FR). El icono se mostrará en el mapa para los puntos que cumplan la regla.</p>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+          <div class="cfg-field" style="flex:0 0 auto">
+            <label>Imagen (PNG/SVG/JPG, máx 64px)</label>
+            <input type="file" id="iconRuleFile" accept="image/*" style="font-size:11px">
+          </div>
+          <div class="cfg-field" style="flex:1;min-width:120px">
+            <label>IDs de emisor (separados por coma)</label>
+            <input type="text" id="iconRuleIds" placeholder="001,005,012">
+          </div>
+          <div class="cfg-field" style="flex:0 0 110px">
+            <label>FR mín (MHz)</label>
+            <input type="number" id="iconRuleFrMin" placeholder="0" step="any">
+          </div>
+          <div class="cfg-field" style="flex:0 0 110px">
+            <label>FR máx (MHz)</label>
+            <input type="number" id="iconRuleFrMax" placeholder="99999" step="any">
+          </div>
+          <div class="cfg-field" style="flex:0 0 110px">
+            <label>Tamaño (px)</label>
+            <input type="number" id="iconRuleSize" value="28" min="12" max="80">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addIconRule()">+ Añadir regla</button>
+        </div>
+        <div id="iconRulesList" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="cfg-card">
+        <h4>📍 Iconos en el mapa</h4>
+        <div class="cfg-field">
+          <label for="cfgIconType">Forma de icono</label>
+          <select id="cfgIconType" onchange="updateMapConfig()">
+            <option value="circle">● Círculo</option>
+            <option value="marker">📍 Marcador Leaflet</option>
+            <option value="triangle">▲ Triángulo</option>
+            <option value="diamond">◆ Diamante</option>
+          </select>
+        </div>
+        <div class="cfg-field">
+          <label for="cfgIconColor">Color hover (temporal)</label>
+          <input type="color" id="cfgIconColor" value="#4f8ef7" onchange="updateMapConfig()">
+        </div>
+        <div class="cfg-field">
+          <label for="cfgPinnedColor">Color punto fijado</label>
+          <input type="color" id="cfgPinnedColor" value="#f5a623" onchange="updateMapConfig()">
+        </div>
+        <div class="cfg-field">
+          <label for="cfgAreaColor">Color área dibujada</label>
+          <input type="color" id="cfgAreaColor" value="#e05555" onchange="updateMapConfig()">
+        </div>
+        <div class="cfg-field">
+          <label for="cfgIconSize">Tamaño icono (radio px)</label>
+          <input type="number" id="cfgIconSize" min="6" max="30" step="2" value="14" onchange="updateMapConfig()">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div class="history-panel" id="historyPanel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h4 style="margin:0">📜 Historial de cambios</h4>
+    <button onclick="toggleHistory()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="rowDetailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('rowDetailModal')">✕</button>
+    <h3 id="rowDetailTitle">Detalle de fila</h3>
+    <div class="modal-grid" id="rowDetailGrid"></div>
+    <div style="margin-top:14px;text-align:right">
+      <button class="btn btn-secondary" onclick="closeModal('rowDetailModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="diffModal">
+  <div class="modal diff-modal">
+    <button class="modal-close" onclick="closeModal('diffModal')">✕</button>
+    <h3>Comparar importación</h3>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">
+      <span style="background:rgba(76,175,125,0.2);padding:2px 7px;border-radius:4px;margin-right:8px">🟢 Nueva</span>
+      <span style="background:rgba(245,166,35,0.2);padding:2px 7px;border-radius:4px;margin-right:8px">🟡 Modificada</span>
+      <span style="padding:2px 7px;border-radius:4px">⚪ Sin cambios</span>
+    </div>
+    <div class="diff-table-wrap">
+      <table class="diff-table" id="diffTable">
+        <thead id="diffHead"></thead>
+        <tbody id="diffBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="applyAllDiff()">✔ Aplicar todos</button>
+      <button class="btn btn-secondary" onclick="applySelectedDiff()">✔ Aplicar seleccionados</button>
+      <button class="btn btn-secondary" onclick="closeModal('diffModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addColModal">
+  <div class="modal add-col-modal">
+    <button class="modal-close" onclick="closeModal('addColModal')">✕</button>
+    <h3>+ Nueva columna</h3>
+    <div class="form-field">
+      <label>Nombre de columna</label>
+      <input type="text" id="newColName" placeholder="Ej: FRECUENCIA">
+    </div>
+    <div class="form-field">
+      <label>Tipo</label>
+      <select id="newColType">
+        <option value="text">Texto</option>
+        <option value="number">Número</option>
+        <option value="date">Fecha</option>
+        <option value="boolean">Booleano</option>
+        <option value="comment">Comentario</option>
+      </select>
+    </div>
+    <div class="form-field" id="newColDecimalsWrap" style="display:none">
+      <label>Decimales</label>
+      <input type="number" id="newColDecimals" value="2" min="0" max="6">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-primary" onclick="confirmAddCol()">Añadir</button>
+      <button class="btn btn-secondary" onclick="closeModal('addColModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    <h3>👤 Perfiles de Repositorio</h3>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Perfil activo: <strong id="activeProfileName"></strong></div>
+      <div id="profileList" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;margin-bottom:10px"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Crear nuevo perfil</div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="newProfileName" placeholder="Nombre del perfil…" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="createProfile()">+ Crear</button>
+      </div>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-secondary" onclick="closeModal('profileModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" onchange="handleFileImport(event)">
+<div class="notif" id="notif"></div>
+
+<script>
+const DEFAULT_COLUMNS = [
+  { key: 'fav',        label: '⭐',          type: 'fav',     decimals: 0 },
+  { key: 'id',         label: 'ID',          type: 'id',      decimals: 0 },
+  { key: 'plataforma', label: 'PLATAFORMA',  type: 'text',    decimals: 0 },
+  { key: 'emisor',     label: 'EMISOR',      type: 'text',    decimals: 0 },
+  { key: 'tipo',       label: 'TIPO',        type: 'text',    decimals: 0 },
+  { key: 'modo',       label: 'MODO',        type: 'text',    decimals: 0 },
+  { key: 'banda',      label: 'BANDA',       type: 'text',    decimals: 0 },
+  { key: 'fr',         label: 'FR',          type: 'number',  decimals: 2 },
+  { key: 'fr_min',     label: 'FR Mín.',     type: 'number',  decimals: 2 },
+  { key: 'fr_max',     label: 'FR Máx.',     type: 'number',  decimals: 2 },
+  { key: 'pri',        label: 'PRI',         type: 'number',  decimals: 2 },
+  { key: 'pri_min',    label: 'PRI Mín.',    type: 'number',  decimals: 2 },
+  { key: 'pri_max',    label: 'PRI Máx.',    type: 'number',  decimals: 2 },
+  { key: 'pw',         label: 'PW',          type: 'number',  decimals: 2 },
+  { key: 'pw_min',     label: 'PW Mín.',     type: 'number',  decimals: 2 },
+  { key: 'pw_max',     label: 'PW Máx.',     type: 'number',  decimals: 2 },
+  { key: 'scan',       label: 'SCAN',        type: 'number',  decimals: 2 },
+  { key: 'lat',        label: 'LAT',         type: 'number',  decimals: 6 },
+  { key: 'lon',        label: 'LON',         type: 'number',  decimals: 6 },
+  { key: '_modified',   label: 'MODIFICADO',  type: 'text',    decimals: 0, readonly: true },
+  { key: 'comentarios',label: 'COMENTARIOS', type: 'comment', decimals: 0 },
+];
+
+let columns       = JSON.parse(localStorage.getItem('sig_columns') || 'null') || DEFAULT_COLUMNS.map(c=>({...c}));
+let rows          = JSON.parse(localStorage.getItem('sig_rows') || '[]');
+let colorRules    = JSON.parse(localStorage.getItem('sig_color_rules') || '[]');
+let history       = JSON.parse(localStorage.getItem('sig_history') || '[]');
+let savedSearches = JSON.parse(localStorage.getItem('sig_saved_searches') || '{}');
+let isDark        = localStorage.getItem('sig_theme') !== 'light';
+let importBuffer  = [];
+let importFileType= '';
+let sortKey = '', sortDir = 1;
+let filterValues  = {};
+let splitTopH     = parseFloat(localStorage.getItem('sig_split') || '55');
+let unsavedChanges= false;
+let currentResults= [];
+
+// ---- MAP STATE ----
+let mapConfig = JSON.parse(localStorage.getItem('sig_map_cfg') || 'null') || {
+  tileType:'osm', iconType:'circle', iconColor:'#4f8ef7',
+  pinnedColor:'#f5a623', areaColor:'#e05555',
+  initialZoom:5, showTooltips:true, autoFit:false, iconSize:14,
+};
+const TILE_LAYERS = {
+  osm:       { url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',  attr:'© OpenStreetMap' },
+  topo:      { url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',    attr:'© OpenTopoMap' },
+  satellite: { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' },
+  dark:      { url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  attr:'© CartoDB' },
+  light:     { url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attr:'© CartoDB' },
+  local:     { url:'tiles/{z}/{x}/{y}.jpg', attr:'Tiles locales', minZoom: 6, maxZoom: 8 },  // Ajusta la URL según tu servidor
+};
+let _map=null, _tileLayer=null, _hoverMarker=null, _pinnedMarkers={}, _drawGroup=null;
+let _areaFilterActive=false, _areaLayer=null;
+let _dragSrcKey=null;
+let hiddenCols  = JSON.parse(localStorage.getItem('sig_hidden_cols')  || '[]');
+let iconRules   = JSON.parse(localStorage.getItem('sig_icon_rules')   || '[]');
+let filterScale = parseFloat(localStorage.getItem('sig_filter_scale') || '1');
+
+// ---- PROFILES ----
+let profiles = JSON.parse(localStorage.getItem('sig_profiles') || '{}');
+let currentProfile = localStorage.getItem('sig_current_profile') || 'default';
+
+function init() {
+  applyTheme();
+  renderRepoTable();
+  renderColFilters();
+  runSearch();
+  renderSavedSearches();
+  renderColorRules();
+  renderHistory();
+  initSplit();
+  mapInit();
+  mapConfigUILoad();
+  profilesInit();
+  applyFilterScale();
+  renderHiddenColsGrid();
+  renderIconRulesList();
+  document.addEventListener('keydown', globalKeys);
+  setInterval(autoSave, 30000);
+  const lastTab = parseInt(localStorage.getItem('sig_last_tab') || '1');
+  if (lastTab === 2) switchTab(2);
+}
+
+function autoSave() {
+  localStorage.setItem('sig_rows', JSON.stringify(rows));
+  localStorage.setItem('sig_columns', JSON.stringify(columns));
+  localStorage.setItem('sig_color_rules', JSON.stringify(colorRules));
+  if (unsavedChanges) { setUnsaved(false); showNotif('Autoguardado ✓', 'success'); }
+
+  profileSaveCurrent();
+}
+
+function setUnsaved(v) {
+  unsavedChanges = v;
+  document.getElementById('unsavedBadge').classList.toggle('visible', v);
+}
+
+function globalKeys(e) {
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); autoSave(); }
+  if (e.ctrlKey && e.key === 'f') { e.preventDefault(); switchTab(1); document.getElementById('globalSearch').focus(); }
+}
+
+function applyTheme() {
+  document.body.classList.toggle('light-mode', !isDark);
+  document.querySelector('.theme-toggle').textContent = isDark ? '☀ Modo Claro' : '🌙 Modo Oscuro';
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('sig_theme', isDark ? 'dark' : 'light');
+  applyTheme();
+}
+
+function switchTab(n) {
+  [1,2,3].forEach(i => {
+    const tab = document.getElementById('tab'+i);
+    const btn = document.getElementById('tabBtn'+i);
+    if (!tab||!btn) return;
+    if (i===n) { tab.classList.add('active'); btn.classList.add('active'); }
+    else       { tab.classList.remove('active'); btn.classList.remove('active'); }
+  });
+  localStorage.setItem('sig_last_tab', n);
+  if (n===1) { renderColFilters(); runSearch(); if (_map) setTimeout(()=>_map.invalidateSize(),80); }
+}
+
+function initSplit() {
+  const cont = document.getElementById('splitContainer');
+  const top  = document.getElementById('splitTop');
+  const div  = document.getElementById('splitDivider');
+  if (!cont || !top || !div) return;
+
+  // Apply saved height as px, not %, to work reliably inside flex
+  function applyHeight(pct) {
+    const totalH = cont.getBoundingClientRect().height || window.innerHeight;
+    top.style.height = Math.round(totalH * pct / 100) + 'px';
+  }
+  applyHeight(splitTopH);
+
+  let dragging = false, startY, startH;
+
+  div.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = top.getBoundingClientRect().height;
+    document.body.style.cursor    = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const totalH = cont.getBoundingClientRect().height;
+    const newH = Math.max(80, Math.min(totalH - 80, startH + (e.clientY - startY)));
+    top.style.height = newH + 'px';
+    splitTopH = (newH / totalH) * 100;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor    = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem('sig_split', splitTopH);
+    if (typeof _map !== 'undefined' && _map) _map.invalidateSize();
+  });
+}
+
+function genId() {
+  let max = 0;
+  rows.forEach(r => { const n = parseInt(r.id||'0'); if (n > max) max = n; });
+  return String(max + 1).padStart(6, '0');
+}
+
+function renderRepoTable() {
+  const head = document.getElementById('repoHead');
+  const visibleCols = columns.filter(c=>c.type !== 'fav' && c.type !== 'id');
+  let hHtml = '<tr>';
+  hHtml += '<th title="Favorito">⭐</th>';
+hHtml += `<th ondblclick="autoFitCol(this)">ID<span class="sort-icon" onclick="sortRepo('id')" title="Ordenar" style="cursor:pointer;padding:2px 4px;border-radius:3px;background:var(--bg4);margin-left:4px">${sortKey==='id'?(sortDir===1?'▲':'▼'):'⇅'}</span></th>`;
+
+  visibleCols.forEach(c => {
+    const badge = c.type==='number' ? '<span class="type-badge">#</span>' : c.type==='date' ? '<span class="type-badge">📅</span>' : '';
+hHtml += `<th draggable="true" ondblclick="autoFitCol(this)" ondragstart="colDragStart(event,'${c.key}')" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,'${c.key}')">${c.label}${badge}<span class="sort-icon" onclick="sortRepo('${c.key}')" title="Ordenar" style="cursor:pointer;padding:2px 4px;border-radius:3px;background:var(--bg4);margin-left:4px">${sortKey===c.key?(sortDir===1?'▲':'▼'):'⇅'}</span></th>`;
+  });
+  hHtml += '<th>Acciones</th></tr>';
+  hHtml += '<tr class="repo-col-filter-row"><td></td><td><input type="text" placeholder="🔍" oninput="filterRepo()" data-col="id"></td>';
+  visibleCols.forEach(c => {
+    hHtml += `<td><input type="text" placeholder="🔍" oninput="filterRepo()" data-col="${c.key}"></td>`;
+  });
+  hHtml += '<td></td></tr>';
+  head.innerHTML = hHtml;
+  renderRepoBody();
+  autoFitAllCols();
+}
+
+function renderRepoBody() {
+  const body = document.getElementById('repoBody');
+  const visibleCols = columns.filter(c=>c.type !== 'fav' && c.type !== 'id');
+  const filterInputs = document.querySelectorAll('.repo-col-filter-row input');
+  const filters = {};
+  filterInputs.forEach(inp => { if (inp.value) filters[inp.dataset.col] = inp.value.toLowerCase(); });
+
+  let displayRows = [...rows];
+  Object.keys(filters).forEach(k => {
+    displayRows = displayRows.filter(r => String(r[k]||'').toLowerCase().includes(filters[k]));
+  });
+  if (sortKey) {
+    displayRows.sort((a,b) => {
+      const av = a[sortKey]||'', bv = b[sortKey]||'';
+      const na = parseFloat(av), nb = parseFloat(bv);
+      if (!isNaN(na) && !isNaN(nb)) return (na-nb)*sortDir;
+      return String(av).localeCompare(String(bv))*sortDir;
+    });
+  }
+  displayRows.sort((a,b) => (b._pinned?1:0)-(a._pinned?1:0));
+
+  let html = '';
+  displayRows.forEach(row => {
+    const realIdx = rows.indexOf(row);
+    const bg = getRowBg(row);
+    const pinCls = row._pinned ? 'pinned-row' : '';
+    html += `<tr class="${pinCls}" style="${bg?'background:'+bg+'!important':''}">`;
+    html += `<td style="text-align:center"><button class="star-btn ${row._fav?'active':''}" onclick="toggleFav(${realIdx})">${row._fav?'⭐':'☆'}</button></td>`;
+    html += `<td style="font-family:monospace;font-size:11px;color:var(--text3)">${row.id||''}</td>`;
+    visibleCols.forEach(c => {
+      if (c.type === 'boolean') {
+        html += `<td><input type="checkbox" ${row[c.key]?'checked':''} onchange="updateCell(${realIdx},'${c.key}',this.checked)"></td>`;
+      } else if (c.readonly) {
+        html += `<td style="font-size:10px;color:var(--text3);white-space:nowrap">${escHtml(row[c.key]||'')}</td>`;
+      } else if (c.type === 'comment') {
+        html += `<td><input type="text" value="${escHtml(row[c.key]||'')}" style="min-width:140px" onchange="updateCell(${realIdx},'${c.key}',this.value)"></td>`;
+      } else if (c.type === 'number') {
+        html += `<td><input type="number" step="${Math.pow(10,-c.decimals)}" value="${row[c.key]||''}" style="width:80px" onchange="updateCell(${realIdx},'${c.key}',this.value)"></td>`;
+      } else {
+        html += `<td><input type="text" value="${escHtml(row[c.key]||'')}" onchange="updateCell(${realIdx},'${c.key}',this.value)" list="suggest_${c.key}"></td>`;
+      }
+    });
+    html += `<td style="display:flex;gap:4px;align-items:center">
+      <button class="btn btn-secondary btn-sm" onclick="pinRow(${realIdx})" title="${row._pinned?'Desanclar':'Anclar'}">${row._pinned?'📌':'📍'}</button>
+      <button class="row-del-btn" onclick="deleteRow(${realIdx})" title="Eliminar">✕</button>
+    </td></tr>`;
+  });
+  body.innerHTML = html;
+  renderSuggestlists();
+}
+
+function filterRepo() { renderRepoBody(); }
+function sortRepo(key) {
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+  renderRepoTable();
+}
+
+function renderSuggestlists() {
+  document.querySelectorAll('datalist[id^="suggest_"]').forEach(el=>el.remove());
+  columns.filter(c=>c.type==='text').forEach(c => {
+    const vals = [...new Set(rows.map(r=>r[c.key]||'').filter(Boolean))];
+    const dl = document.createElement('datalist');
+    dl.id = 'suggest_'+c.key;
+    vals.forEach(v => { const opt=document.createElement('option'); opt.value=v; dl.appendChild(opt); });
+    document.body.appendChild(dl);
+  });
+}
+
+function addRow() {
+  const newRow = { id: genId(), _fav: false, _pinned: false };
+  columns.forEach(c => { if (c.type !== 'fav' && c.type !== 'id') newRow[c.key] = ''; });
+  rows.push(newRow);
+  addHistoryEntry(`Fila añadida ID ${newRow.id}`);
+  setUnsaved(true);
+  renderRepoBody();
+  runSearch();
+}
+
+function deleteRow(idx) {
+  if (!confirm('¿Eliminar fila ID ' + rows[idx].id + '?')) return;
+  addHistoryEntry(`Fila eliminada ID ${rows[idx].id}`);
+  rows.splice(idx, 1);
+  setUnsaved(true);
+  renderRepoBody();
+  runSearch();
+}
+
+function clearAllRows() {
+  const answer = prompt(
+    '⚠️ Esta acción eliminará TODAS las filas del repositorio de forma permanente.\n\nEscribe exactamente  Borrar todo  para confirmar:'
+  );
+  if (answer === null) return; // cancelado
+  if (answer.trim() !== 'Borrar todo') {
+    showNotif('Texto incorrecto. El repositorio no ha sido modificado.', 'error');
+    return;
+  }
+  rows = [];
+  addHistoryEntry('Repositorio vaciado por el usuario');
+  setUnsaved(true);
+  renderRepoBody();
+  runSearch();
+  showNotif('Repositorio vaciado correctamente', 'success');
+}
+
+function toggleFav(idx) {
+  rows[idx]._fav = !rows[idx]._fav;
+  setUnsaved(true);
+  renderRepoBody();
+  runSearch();
+}
+
+function pinRow(idx) {
+  rows[idx]._pinned = !rows[idx]._pinned;
+  setUnsaved(true);
+  renderRepoBody();
+}
+
+function updateCell(idx, key, val) {
+  const old = rows[idx][key];
+  rows[idx][key] = val;
+  rows[idx]._modified = new Date().toISOString().slice(0,16).replace('T',' ');
+  addHistoryEntry(`ID ${rows[idx].id}: ${key} "${old}" → "${val}"`);
+  setUnsaved(true);
+  runSearch();
+}
+
+function toggleColorRules() {
+  const p = document.getElementById('colorRulesPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderColorRules() {
+  const list = document.getElementById('colorRulesList');
+  let html = '';
+  colorRules.forEach((rule, i) => {
+    html += `<div class="color-rule-row">
+      <select onchange="updateColorRule(${i},'col',this.value)">
+        ${columns.filter(c=>c.type==='number'||c.type==='text').map(c=>`<option value="${c.key}" ${rule.col===c.key?'selected':''}>${c.label}</option>`).join('')}
+      </select>
+      <select onchange="updateColorRule(${i},'op',this.value)">
+        <option value="between" ${rule.op==='between'?'selected':''}>Entre</option>
+        <option value="gt" ${rule.op==='gt'?'selected':''}>Mayor que</option>
+        <option value="lt" ${rule.op==='lt'?'selected':''}>Menor que</option>
+        <option value="eq" ${rule.op==='eq'?'selected':''}>Igual a</option>
+        <option value="contains" ${rule.op==='contains'?'selected':''}>Contiene</option>
+      </select>
+      <input type="text" value="${rule.val1||''}" placeholder="Valor 1" style="width:70px" onchange="updateColorRule(${i},'val1',this.value)">
+      ${rule.op==='between'?`<input type="text" value="${rule.val2||''}" placeholder="Valor 2" style="width:70px" onchange="updateColorRule(${i},'val2',this.value)">` : ''}
+      <input type="color" value="${rule.color||'#4f8ef7'}" onchange="updateColorRule(${i},'color',this.value)" title="Color de fondo">
+      <button class="btn btn-danger btn-sm" onclick="removeColorRule(${i})">✕</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function addColorRule() {
+  const numCols = columns.filter(c=>c.type==='number');
+  const firstCol = numCols.length > 0 ? numCols[0].key : (columns[2]?.key || '');
+  colorRules.push({ col: firstCol, op: 'between', val1: '', val2: '', color: '#4f8ef7' });
+  renderColorRules();
+  setUnsaved(true);
+}
+
+function updateColorRule(i, prop, val) {
+  colorRules[i][prop] = val;
+  renderColorRules();
+  renderRepoBody();
+  setUnsaved(true);
+}
+
+function removeColorRule(i) {
+  colorRules.splice(i, 1);
+  renderColorRules();
+  renderRepoBody();
+  setUnsaved(true);
+}
+
+function getRowBg(row) {
+  for (const rule of colorRules) {
+    const v = row[rule.col];
+    const num = parseFloat(v);
+    const v1 = parseFloat(rule.val1), v2 = parseFloat(rule.val2);
+    let match = false;
+    if (rule.op==='between' && !isNaN(num) && !isNaN(v1) && !isNaN(v2)) match = num >= Math.min(v1,v2) && num <= Math.max(v1,v2);
+    else if (rule.op==='gt' && !isNaN(num) && !isNaN(v1)) match = num > v1;
+    else if (rule.op==='lt' && !isNaN(num) && !isNaN(v1)) match = num < v1;
+    else if (rule.op==='eq') match = String(v||'').toLowerCase() === String(rule.val1||'').toLowerCase();
+    else if (rule.op==='contains') match = String(v||'').toLowerCase().includes(String(rule.val1||'').toLowerCase());
+    if (match) return rule.color + '33';
+  }
+  return null;
+}
+
+function openAddColModal() {
+  document.getElementById('newColName').value = '';
+  document.getElementById('newColType').value = 'text';
+  document.getElementById('newColDecimalsWrap').style.display = 'none';
+  document.getElementById('newColType').onchange = function() {
+    document.getElementById('newColDecimalsWrap').style.display = this.value === 'number' ? 'block' : 'none';
+  };
+  openModal('addColModal');
+}
+
+function confirmAddCol() {
+  const name = document.getElementById('newColName').value.trim();
+  if (!name) { showNotif('Introduce un nombre de columna', 'error'); return; }
+  const type = document.getElementById('newColType').value;
+  const decimals = parseInt(document.getElementById('newColDecimals').value) || 2;
+  const key = name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  if (columns.find(c=>c.key===key)) { showNotif('Columna ya existe', 'error'); return; }
+  columns.push({ key, label: name.toUpperCase(), type, decimals });
+  rows.forEach(r => r[key] = '');
+  addHistoryEntry(`Columna añadida: ${name} (${type})`);
+  setUnsaved(true);
+  closeModal('addColModal');
+  renderRepoTable();
+  renderColFilters();
+}
+
+function addHistoryEntry(msg) {
+  const ts = new Date().toLocaleTimeString('es-ES');
+  history.unshift({ ts, msg });
+  if (history.length > 100) history.pop();
+  localStorage.setItem('sig_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!history.length) { list.innerHTML = '<div style="color:var(--text3);font-size:11px">Sin cambios recientes.</div>'; return; }
+  list.innerHTML = history.slice(0,50).map(h=>`<div class="history-item"><strong>${h.ts}</strong><br>${h.msg}</div>`).join('');
+}
+
+function toggleHistory() {
+  document.getElementById('historyPanel').classList.toggle('open');
+}
+
+function renderColFilters() {
+  const wrap = document.getElementById('colFilters');
+  const searchCols = columns.filter(c=>c.type !== 'fav');
+  let html = '';
+  searchCols.forEach(c => {
+    const stored = filterValues[c.key] || { enabled: true, val: '', margin: 5, useMargin: false };
+    html += `<div class="col-filter-chip">
+      <input type="checkbox" id="chk_${c.key}" ${stored.enabled?'checked':''} onchange="runSearch()">
+      <label for="chk_${c.key}">${c.label}</label>
+      <input type="text" class="filter-value" id="fval_${c.key}" value="${escHtml(stored.val||'')}" placeholder="…" oninput="runSearch()" ${!stored.enabled?'disabled':''}>
+      ${c.type==='number'?`<div class="margin-wrap ${stored.useMargin?'visible':''}" id="mwrap_${c.key}">
+        <input type="checkbox" id="mchk_${c.key}" ${stored.useMargin?'checked':''} title="±%" onchange="runSearch()">
+        <label for="mchk_${c.key}" style="font-size:10px;color:var(--text3)">±</label>
+        <input type="number" class="margin-pct" id="mpct_${c.key}" value="${stored.margin||5}" min="0" max="100" step="0.1" oninput="runSearch()" title="Margen %">
+        <span style="font-size:10px;color:var(--text3)">%</span>
+      </div>`:''}
+    </div>`;
+  });
+  wrap.innerHTML = html;
+  searchCols.filter(c=>c.type==='number').forEach(c => {
+    const valInp = document.getElementById('fval_'+c.key);
+    if (valInp) {
+      valInp.addEventListener('input', () => {
+        const mw = document.getElementById('mwrap_'+c.key);
+        if (mw) mw.classList.toggle('visible', valInp.value.trim() !== '');
+      });
+    }
+  });
+    setTimeout(applyFilterScale, 0);
+}
+
+function getFilterState() {
+  const state = {};
+  columns.filter(c=>c.type!=='fav').forEach(c => {
+    const chk  = document.getElementById('chk_'+c.key);
+    const val  = document.getElementById('fval_'+c.key);
+    const mchk = document.getElementById('mchk_'+c.key);
+    const mpct = document.getElementById('mpct_'+c.key);
+    state[c.key] = {
+      enabled:   chk  ? chk.checked             : true,
+      val:       val  ? val.value.trim()         : '',
+      useMargin: mchk ? mchk.checked             : false,
+      margin:    mpct ? parseFloat(mpct.value)||5 : 5
+    };
+  });
+  filterValues = state;
+  return state;
+}
+
+function runSearch() {
+  const state   = getFilterState();
+  const global  = (document.getElementById('globalSearch')?.value || '').toLowerCase().trim();
+  const favOnly = document.getElementById('favOnlyChk')?.checked;
+  const rangePairs = { fr: ['fr_min','fr_max'], pri: ['pri_min','pri_max'], pw: ['pw_min','pw_max'] };
+
+  let sorted = [...rows].sort((a,b) => (b._pinned?1:0)-(a._pinned?1:0));
+
+  let results = sorted.filter(row => {
+    if (_areaFilterActive && _areaLayer && !rowInsideArea(row)) return false;
+    if (favOnly && !row._fav) return false;
+    if (global) {
+      const all = Object.values(row).join(' ').toLowerCase();
+      if (!all.includes(global)) return false;
+    }
+    for (const c of columns) {
+      if (c.type === 'fav') continue;
+      const fs = state[c.key];
+      if (!fs || !fs.enabled || !fs.val) continue;
+      const cellVal = String(row[c.key]||'');
+      if (c.type === 'number') {
+        const num    = parseFloat(cellVal);
+        const target = parseFloat(fs.val);
+        const pair   = rangePairs[c.key];
+        if (!isNaN(target) && pair) {
+          const vMin = parseFloat(row[pair[0]]);
+          const vMax = parseFloat(row[pair[1]]);
+          const mf   = fs.useMargin ? (fs.margin/100) : 0;
+          const sMin = target * (1 - mf);
+          const sMax = target * (1 + mf);
+          const exactMatch = !isNaN(num) && num >= sMin && num <= sMax;
+          const rangeMatch = !isNaN(vMin) && !isNaN(vMax) && target >= vMin && target <= vMax;
+          if (!exactMatch && !rangeMatch) return false;
+        } else if (!isNaN(num) && !isNaN(target)) {
+          if (fs.useMargin) {
+            const margin = target * (fs.margin/100);
+            if (num < target - margin || num > target + margin) return false;
+          } else {
+            if (Math.abs(num - target) > 1e-9) return false;
+          }
+        } else {
+          if (!cellVal.toLowerCase().includes(fs.val.toLowerCase())) return false;
+        }
+      } else {
+        if (!cellVal.toLowerCase().includes(fs.val.toLowerCase())) return false;
+      }
+    }
+    return true;
+  });
+
+  renderResultsTable(results, global);
+  document.getElementById('resultsBadge').textContent = results.length + ' resultado' + (results.length===1?'':'s');
+  currentResults = results;
+  mapChipUpdate();
+  if (mapConfig.autoFit) fitMapToCoords();
+}
+
+function renderResultsTable(data, highlight) {
+  const head = document.getElementById('resultsHead');
+  const body = document.getElementById('resultsBody');
+  const visCols = columns.filter(c => c.type !== 'fav' && !hiddenCols.includes(c.key));
+  let hHtml = '<tr><th class="no-drag">⭐</th><th class="no-drag" style="text-align:center" title="Fijar en mapa">📍</th>';
+  visCols.forEach(c => {
+    hHtml += `<th draggable="true" onclick="sortResults('${c.key}')" ondragstart="colDragStart(event,'${c.key}')" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,'${c.key}')">${c.label}<span class="sort-icon"></span></th>`;
+  });
+  hHtml += '<th class="no-drag"></th></tr>';
+  head.innerHTML = hHtml;
+  let bHtml = '';
+  data.forEach(row => {
+    const bg = getRowBg(row);
+    const lat = parseFloat(row.lat), lon = parseFloat(row.lon);
+    const hasXY = !isNaN(lat) && !isNaN(lon);
+    const lbl = String(row.emisor || row.id || 'Punto').replace(/'/g,"&#39;");
+    const pinned = !!_pinnedMarkers[row.id];
+    let trAttrs = `data-rid="${row.id||''}" style="${bg?'background:'+bg:''}"`;
+    if (hasXY) trAttrs += ` onmouseenter="mapHoverShow(${lat},${lon},'${lbl}')" onmouseleave="mapHoverHide()"`;
+    bHtml += `<tr ${trAttrs}>`;
+    bHtml += `<td>${row._fav?'⭐':''}</td>`;
+    bHtml += `<td class="map-row-pin"><input class="map-pin-cb" type="checkbox" ${pinned?'checked':''} ${hasXY?'':'disabled'} title="${hasXY?'Fijar/desfijar en mapa':'Sin coordenadas'}" onchange="mapPinToggle('${row.id}',${isNaN(lat)?'null':lat},${isNaN(lon)?'null':lon},'${lbl}',this.checked)"></td>`;
+    visCols.forEach(c => {
+      let val = String(row[c.key]||'');
+      if (highlight && val) { const re = new RegExp('('+escRegex(highlight)+')','gi'); val = val.replace(re,'<span class="highlight">$1</span>'); }
+      bHtml += `<td>${val}</td>`;
+    });
+    bHtml += `<td><button class="row-detail-btn" onclick="showRowDetail(${rows.indexOf(row)})" title="Ver detalle">🔍</button></td>`;
+    bHtml += '</tr>';
+  });
+  body.innerHTML = bHtml;
+  mapChipUpdate();
+}
+
+function sortResults(key) {
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+  runSearch();
+}
+
+function showRowDetail(idx) {
+  const row = rows[idx];
+  document.getElementById('rowDetailTitle').textContent = 'Detalle — ID ' + row.id;
+  const grid = document.getElementById('rowDetailGrid');
+  let html = '';
+  columns.filter(c=>c.type!=='fav').forEach(c => {
+    html += `<div class="modal-field"><label>${c.label}</label><span>${escHtml(String(row[c.key]||'—'))}</span></div>`;
+  });
+  grid.innerHTML = html;
+  openModal('rowDetailModal');
+}
+
+function renderSavedSearches() {
+  const sel = document.getElementById('savedSearchSelect');
+  sel.innerHTML = '<option value="">— Búsquedas guardadas —</option>';
+  Object.keys(savedSearches).forEach(name => {
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function saveCurrentSearch() {
+  const name = prompt('Nombre para esta búsqueda:');
+  if (!name) return;
+  const state = getFilterState();
+  savedSearches[name] = { filters: state, global: document.getElementById('globalSearch').value };
+  localStorage.setItem('sig_saved_searches', JSON.stringify(savedSearches));
+  renderSavedSearches();
+  showNotif('Búsqueda guardada: ' + name, 'success');
+}
+
+function loadSavedSearch(name) {
+  if (!name || !savedSearches[name]) return;
+  const s = savedSearches[name];
+  document.getElementById('globalSearch').value = s.global || '';
+  Object.keys(s.filters||{}).forEach(key => {
+    const chk  = document.getElementById('chk_'+key);
+    const val  = document.getElementById('fval_'+key);
+    const mchk = document.getElementById('mchk_'+key);
+    const mpct = document.getElementById('mpct_'+key);
+    if (chk)  chk.checked  = s.filters[key].enabled;
+    if (val)  val.value    = s.filters[key].val || '';
+    if (mchk) mchk.checked = s.filters[key].useMargin;
+    if (mpct) mpct.value   = s.filters[key].margin || 5;
+  });
+  runSearch();
+}
+
+function deleteSavedSearch() {
+  const sel = document.getElementById('savedSearchSelect');
+  const name = sel.value;
+  if (!name) return;
+  delete savedSearches[name];
+  localStorage.setItem('sig_saved_searches', JSON.stringify(savedSearches));
+  renderSavedSearches();
+  showNotif('Búsqueda eliminada', 'success');
+}
+
+function exportRepo(fmt) { exportData(rows, fmt, 'signal_repository'); closeDropdowns(); }
+function exportResults(fmt) { exportData(currentResults, fmt, 'signal_results'); }
+
+function exportData(data, fmt, filename) {
+  const expCols = columns.filter(c=>c.type!=='fav');
+  if (fmt === 'csv') {
+    const header = expCols.map(c=>c.label).join(',');
+    const csvRows = data.map(row => expCols.map(c => {
+      const v = String(row[c.key]||'');
+      return v.includes(',')||v.includes('"') ? '"'+v.replace(/"/g,'""')+'"' : v;
+    }).join(','));
+    downloadFile([header,...csvRows].join('\n'), filename+'.csv', 'text/csv');
+  } else if (fmt === 'json') {
+    const jsonData = data.map(row => { const obj={}; expCols.forEach(c=>obj[c.label]=row[c.key]||''); return obj; });
+    downloadFile(JSON.stringify(jsonData, null, 2), filename+'.json', 'application/json');
+  } else if (fmt === 'xml') {
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<records>\n';
+    data.forEach(row => {
+      xml += '  <record>\n';
+      expCols.forEach(c => { xml += `    <${c.key}>${escXml(String(row[c.key]||''))}</${c.key}>\n`; });
+      xml += '  </record>\n';
+    });
+    xml += '</records>';
+    downloadFile(xml, filename+'.xml', 'application/xml');
+  } else if (fmt === 'pdf') {
+    generatePDF(data, filename);
+  }
+}
+
+function generatePDF(data, filename) {
+  const expCols = columns.filter(c=>c.type!=='fav');
+  const win = window.open('', '_blank');
+  if (!win) { showNotif('Permite ventanas emergentes para exportar PDF', 'error'); return; }
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${filename}</title><style>
+    body{font-family:sans-serif;font-size:10px;padding:20px}h2{font-size:14px;margin-bottom:12px}
+    table{border-collapse:collapse;width:100%}th{background:#333;color:#fff;padding:5px 8px;text-align:left}
+    td{padding:4px 8px;border:1px solid #ccc}tr:nth-child(even)td{background:#f5f5f5}
+  </style></head><body><h2>${filename} — ${new Date().toLocaleString('es-ES')}</h2>
+  <table><thead><tr>${expCols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead><tbody>`;
+  data.forEach(row => { html += '<tr>'+expCols.map(c=>`<td>${escHtml(String(row[c.key]||''))}</td>`).join('')+'</tr>'; });
+  html += '</tbody></table></body></html>';
+  win.document.write(html); win.document.close(); win.focus();
+  setTimeout(() => { win.print(); }, 400);
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function triggerImport(type) {
+  importFileType = type;
+  const inp = document.getElementById('fileInput');
+  inp.accept = type==='csv' ? '.csv' : type==='json' ? '.json' : '.xml';
+  inp.onchange = handleFileImport;
+  inp.click();
+  closeDropdowns();
+}
+
+function handleFileImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      let parsed = [];
+      if (importFileType==='csv')       parsed = parseCSV(ev.target.result);
+      else if (importFileType==='json') parsed = parseJSONImport(ev.target.result);
+      else if (importFileType==='xml')  parsed = parseXMLImport(ev.target.result);
+      showDiffModal(parsed);
+    } catch(err) { showNotif('Error al importar: '+err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n'); if (!lines.length) return [];
+  const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.match(/(".*?"|[^,]+|(?<=,)(?=,))/g) || [];
+    const obj = {};
+    headers.forEach((h,i) => {
+      const v = (vals[i]||'').trim().replace(/^"|"$/g,'');
+      const col = columns.find(c=>c.label===h||c.key===h.toLowerCase());
+      if (col) obj[col.key] = v;
+    });
+    if (!obj.id) obj.id = genId();
+    return obj;
+  });
+}
+
+function parseJSONImport(text) {
+  const arr = JSON.parse(text);
+  return arr.map(item => {
+    const obj = {};
+    columns.forEach(c => { obj[c.key] = item[c.label]||item[c.key]||''; });
+    if (!obj.id) obj.id = genId();
+    return obj;
+  });
+}
+
+function parseXMLImport(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  return Array.from(doc.querySelectorAll('record')).map(rec => {
+    const obj = {};
+    columns.forEach(c => { const el=rec.querySelector(c.key); obj[c.key]=el?el.textContent:''; });
+    if (!obj.id) obj.id = genId();
+    return obj;
+  });
+}
+
+function showDiffModal(incoming) {
+  importBuffer = incoming;
+  const expCols = columns.filter(c=>c.type!=='fav');
+  let hHtml = '<tr><th><input type="checkbox" id="diffSelAll" onchange="diffSelAll(this.checked)" checked></th><th>Estado</th>';
+  expCols.forEach(c => hHtml += `<th>${c.label}</th>`);
+  hHtml += '</tr>';
+  document.getElementById('diffHead').innerHTML = hHtml;
+  let bHtml = '';
+  incoming.forEach((newRow, i) => {
+    const existing = rows.find(r=>r.id===newRow.id);
+    let status = 'new', statusLabel = '🟢 Nueva';
+    if (existing) {
+      const changed = expCols.some(c=>String(existing[c.key]||'')!==String(newRow[c.key]||''));
+      status = changed ? 'changed' : 'same';
+      statusLabel = changed ? '🟡 Modificada' : '⚪ Sin cambios';
+    }
+    const rowClass = status==='new'?'diff-new':status==='changed'?'diff-changed':'diff-same';
+    bHtml += `<tr class="${rowClass}" data-diff-idx="${i}" data-diff-status="${status}">`;
+    bHtml += `<td><input type="checkbox" class="diff-sel-chk" ${status!=='same'?'checked':''} ${status==='same'?'disabled':''}></td>`;
+    bHtml += `<td style="white-space:nowrap">${statusLabel}</td>`;
+    expCols.forEach(c => {
+      const newVal = String(newRow[c.key]||'');
+      const oldVal = existing ? String(existing[c.key]||'') : '';
+      const cellClass = existing && oldVal!==newVal ? 'diff-cell-changed' : '';
+      bHtml += `<td class="${cellClass}" title="${escHtml(existing&&oldVal!==newVal?'Antes: '+oldVal:'')}">${escHtml(newVal)}</td>`;
+    });
+    bHtml += '</tr>';
+  });
+  document.getElementById('diffBody').innerHTML = bHtml;
+  openModal('diffModal');
+}
+
+function diffSelAll(checked) {
+  document.querySelectorAll('.diff-sel-chk:not(:disabled)').forEach(c=>c.checked=checked);
+}
+
+function applyAllDiff() {
+  importBuffer.forEach(newRow => {
+    const idx = rows.findIndex(r=>r.id===newRow.id);
+    if (idx>=0) Object.assign(rows[idx], newRow); else rows.push({ _fav:false, _pinned:false, ...newRow });
+  });
+  addHistoryEntry(`Importación aplicada: ${importBuffer.length} filas`);
+  setUnsaved(true); closeModal('diffModal'); renderRepoBody(); runSearch();
+  showNotif('Importación completada', 'success');
+}
+
+function applySelectedDiff() {
+  let count = 0;
+  document.querySelectorAll('#diffBody tr').forEach(tr => {
+    const chk = tr.querySelector('.diff-sel-chk');
+    if (!chk||!chk.checked) return;
+    const newRow = importBuffer[parseInt(tr.dataset.diffIdx)];
+    const idx = rows.findIndex(r=>r.id===newRow.id);
+    if (idx>=0) Object.assign(rows[idx], newRow); else rows.push({ _fav:false, _pinned:false, ...newRow });
+    count++;
+  });
+  addHistoryEntry(`Importación parcial: ${count} filas`);
+  setUnsaved(true); closeModal('diffModal'); renderRepoBody(); runSearch();
+  showNotif(`${count} filas importadas`, 'success');
+}
+
+function saveBackup() {
+  const backup = {
+    columns, rows, colorRules, savedSearches,
+    profiles, currentProfile, mapConfig,
+    iconRules: iconRules || [],
+    hiddenCols: hiddenCols || [],
+    filterScale: filterScale || 1,
+    ts: new Date().toISOString(), version: 6
+  };
+  downloadFile(JSON.stringify(backup, null, 2), 'signal_backup_'+Date.now()+'.json', 'application/json');
+  showNotif('Backup exportado', 'success');
+}
+
+function loadBackup() {
+  const inp = document.getElementById('fileInput');
+  inp.accept = '.json';
+  inp.onchange = ev => {
+    const file = ev.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const backup = JSON.parse(e.target.result);
+        if (!confirm('¿Restaurar backup? Se sobreescribirán todos los datos actuales.')) return;
+        columns    = backup.columns    || columns;
+        rows       = backup.rows       || [];
+        colorRules = backup.colorRules || [];
+        savedSearches = backup.savedSearches || {};
+        if (backup.profiles && typeof backup.profiles === 'object') {
+          profiles = backup.profiles;
+          localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+        }
+        if (backup.currentProfile && profiles[backup.currentProfile]) {
+          currentProfile = backup.currentProfile;
+          localStorage.setItem('sig_current_profile', currentProfile);
+        }
+        if (backup.mapConfig) {
+          Object.assign(mapConfig, backup.mapConfig);
+          localStorage.setItem('sig_map_cfg', JSON.stringify(mapConfig));
+          mapApplyTiles(); mapConfigUILoad();
+        }
+        if (Array.isArray(backup.iconRules)) {
+          iconRules = backup.iconRules;
+          localStorage.setItem('sig_icon_rules', JSON.stringify(iconRules));
+        }
+        if (Array.isArray(backup.hiddenCols)) {
+          hiddenCols = backup.hiddenCols;
+          localStorage.setItem('sig_hidden_cols', JSON.stringify(hiddenCols));
+        }
+        if (backup.filterScale) { filterScale = backup.filterScale; applyFilterScale(); }
+        renderProfileSelector();
+        autoSave(); renderRepoTable(); renderColFilters(); renderColorRules(); renderSavedSearches(); runSearch();
+        showNotif('Backup restaurado correctamente', 'success');
+      } catch(err) { showNotif('Error al cargar backup', 'error'); }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+    inp.onchange = handleFileImport;
+  };
+  inp.click();
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay'))
+    document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+  if (!e.target.closest('.import-menu') && !e.target.closest('.export-menu')) closeDropdowns();
+});
+
+function toggleDropdown(id) {
+  const el = document.getElementById(id);
+  const wasOpen = el.classList.contains('open');
+  closeDropdowns();
+  if (!wasOpen) el.classList.add('open');
+}
+function closeDropdowns() {
+  document.querySelectorAll('.import-dropdown,.export-dropdown').forEach(d=>d.classList.remove('open'));
+}
+
+let notifTimer;
+function showNotif(msg, type='') {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.className = 'notif show '+type;
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(()=>n.classList.remove('show'), 3000);
+}
+
+function initColResize() {}
+
+function autoFitCol(th) {
+  const table = document.getElementById('repoTable');
+  const ths = Array.from(table.querySelectorAll('thead tr:first-child th'));
+  const colIdx = ths.indexOf(th);
+
+  const measure = (text, el) => {
+    const s = document.createElement('canvas').getContext('2d');
+    const style = window.getComputedStyle(el);
+    s.font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+    return s.measureText(text).width;
+  };
+
+  let maxW = measure(th.innerText.trim(), th) + 54;
+
+  table.querySelectorAll('tbody tr').forEach(row => {
+    const cell = row.cells[colIdx];
+    if (!cell) return;
+const input = cell.querySelector('input[type="text"], input[type="number"]');
+const sel   = cell.querySelector('select');
+let text = '';
+if (input) text = input.value || input.placeholder || '';
+else if (sel) text = sel.options[sel.selectedIndex]?.text || '';
+else text = cell.innerText.trim();
+const w = measure(text, cell) + 36;
+    if (w > maxW) maxW = w;
+  });
+
+  // también medir la fila de filtros (segunda fila del thead)
+  const filterRow = table.querySelectorAll('thead tr')[1];
+  if (filterRow) {
+    const fcell = filterRow.cells[colIdx];
+    if (fcell) {
+      const inp = fcell.querySelector('input');
+      if (inp) {
+        const w = measure(inp.placeholder || '', inp) + 24;
+        if (w > maxW) maxW = w;
+      }
+    }
+  }
+
+  const finalW = Math.max(40, Math.ceil(maxW));
+  th.style.width = finalW + 'px';
+  th.style.minWidth = finalW + 'px';
+  th.style.maxWidth = finalW + 'px';
+
+  // forzar mismo ancho en toda la columna
+  table.querySelectorAll('tbody tr').forEach(row => {
+    const cell = row.cells[colIdx];
+    if (!cell) return;
+    cell.style.width = finalW + 'px';
+    cell.style.minWidth = finalW + 'px';
+    cell.style.maxWidth = finalW + 'px';
+    const input = cell.querySelector('input');
+    if (input) { input.style.width = '100%'; input.style.minWidth = '0'; }
+  });
+}
+
+function autoFitAllCols() {
+  const ths = document.querySelectorAll('#repoTable thead tr:first-child th');
+  ths.forEach((th, i) => { if (i > 0) autoFitCol(th); });
+}
+
+function escHtml(s)  { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escXml(s)   { return escHtml(s); }
+function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+
+// ============================================================
+// MAP FUNCTIONS
+// ============================================================
+function mapInit() {
+  const el = document.getElementById('mapContainer');
+  if (_map || !el || typeof L === 'undefined') return;
+    if (mapConfig.localTileUrl) TILE_LAYERS.local.url = mapConfig.localTileUrl;
+  _map = L.map('mapContainer', {zoomControl:true}).setView([40.25,-3.7], mapConfig.initialZoom||5);
+  mapApplyTiles();
+  _drawGroup = new L.FeatureGroup();
+  _map.addLayer(_drawGroup);
+  const drawCtrl = new L.Control.Draw({
+    position:'topleft',
+    draw:{
+      polygon:  {shapeOptions:{color:mapConfig.areaColor,weight:2}},
+      rectangle:{shapeOptions:{color:mapConfig.areaColor,weight:2}},
+      polyline:false, circle:false, marker:false, circlemarker:false
+    },
+    edit:{featureGroup:_drawGroup}
+  });
+  _map.addControl(drawCtrl);
+  _map.on(L.Draw.Event.CREATED, e => {
+    _drawGroup.clearLayers();
+    _drawGroup.addLayer(e.layer);
+    _areaLayer = e.layer;
+    _areaFilterActive = true;
+    const bar = document.getElementById('mapAreaBar');
+    if (bar) bar.style.display = 'flex';
+    runSearch();
+    mapChipUpdate();
+    showNotif(`Filtro de área activo — ${currentResults.length} emisor(es)`, 'success');
+  });
+  _map.on(L.Draw.Event.DELETED, () => { mapClearArea(); });
+  setTimeout(() => _map.invalidateSize(), 120);
+}
+
+function mapApplyTiles() {
+  if (!_map) return;
+  const cfg = TILE_LAYERS[mapConfig.tileType] || TILE_LAYERS.osm;
+  if (_tileLayer) _map.removeLayer(_tileLayer);
+  _tileLayer = L.tileLayer(cfg.url, {
+    attribution: cfg.attr,
+    minZoom: cfg.minZoom ?? 6,
+    maxZoom: cfg.maxZoom ?? 8
+  }).addTo(_map);
+}
+
+function mapMakeIcon(pinned) {
+  const color = pinned ? mapConfig.pinnedColor : mapConfig.iconColor;
+  if (mapConfig.iconType === 'marker') {
+    return L.icon({
+      iconUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+    });
+  }
+  const s = parseInt(mapConfig.iconSize)||14, d = s*2;
+  let shape;
+  if (mapConfig.iconType==='triangle')
+    shape = `<polygon points="${d/2},2 ${d-2},${d-2} 2,${d-2}" fill="${color}" stroke="white" stroke-width="2"/>`;
+  else if (mapConfig.iconType==='diamond')
+    shape = `<polygon points="${d/2},2 ${d-2},${d/2} ${d/2},${d-2} 2,${d/2}" fill="${color}" stroke="white" stroke-width="2"/>`;
+  else
+    shape = `<circle cx="${d/2}" cy="${d/2}" r="${s-2}" fill="${color}" stroke="white" stroke-width="2"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">${shape}</svg>`;
+  return L.divIcon({html:`<img alt="" src="data:image/svg+xml;utf8,${encodeURIComponent(svg)}">`, iconSize:[d,d], iconAnchor:[s,s], className:''});
+}
+
+function mapHoverShow(lat, lon, label) {
+  if (!_map) mapInit();
+  if (!_map) return;
+  mapHoverHide();
+  _hoverMarker = L.marker([lat,lon],{icon:mapMakeIcon(false),opacity:0.82,zIndexOffset:999}).addTo(_map);
+  if (label) _hoverMarker.bindTooltip(label,{permanent:false,direction:'top'}).openTooltip();
+}
+function mapHoverHide() {
+  if (_hoverMarker && _map) _map.removeLayer(_hoverMarker);
+  _hoverMarker = null;
+}
+
+function mapPinToggle(rowId, lat, lon, label, checked) {
+  if (!_map) mapInit();
+  if (!_map) return;
+  if (!checked) {
+    if (_pinnedMarkers[rowId]) { _map.removeLayer(_pinnedMarkers[rowId]); delete _pinnedMarkers[rowId]; }
+    mapChipUpdate(); return;
+  }
+  if (lat==null||lon==null||isNaN(lat)||isNaN(lon)) return;
+  if (_pinnedMarkers[rowId]) _map.removeLayer(_pinnedMarkers[rowId]);
+  const rowData = rows.find(r => String(r.id) === String(rowId)) || {};
+  const m = mapMakePinnedMarker(rowId, lat, lon, label, rowData);
+  if (m) _pinnedMarkers[rowId] = m;
+  mapChipUpdate();
+}
+
+function clearPinnedMarkers() {
+  Object.keys(_pinnedMarkers).forEach(k => { if (_map) _map.removeLayer(_pinnedMarkers[k]); });
+  _pinnedMarkers = {};
+  document.querySelectorAll('.map-pin-cb').forEach(cb => cb.checked=false);
+  mapChipUpdate();
+}
+
+function fitMapToCoords() {
+  if (!_map) mapInit();
+  const pts = [];
+  currentResults.forEach(r => {
+    const la=parseFloat(r.lat), lo=parseFloat(r.lon);
+    if (!isNaN(la)&&!isNaN(lo)) pts.push([la,lo]);
+  });
+  Object.values(_pinnedMarkers).forEach(m => { const ll=m.getLatLng(); pts.push([ll.lat,ll.lng]); });
+  if (!pts.length) return;
+  _map.fitBounds(L.latLngBounds(pts),{padding:[20,20]});
+}
+
+function mapPointInPoly(lat, lon, verts) {
+  let inside = false;
+  for (let i=0, j=verts.length-1; i<verts.length; j=i++) {
+    const xi=verts[i].lat, yi=verts[i].lng, xj=verts[j].lat, yj=verts[j].lng;
+    if (((yi>lon)!==(yj>lon))&&(lat<(xj-xi)*(lon-yi)/((yj-yi)||1e-15)+xi)) inside=!inside;
+  }
+  return inside;
+}
+
+function rowInsideArea(row) {
+  if (!_areaFilterActive || !_areaLayer) return true;
+  const lat=parseFloat(row.lat), lon=parseFloat(row.lon);
+  if (isNaN(lat)||isNaN(lon)) return false;
+  if (_areaLayer instanceof L.Rectangle) return _areaLayer.getBounds().contains([lat,lon]);
+  const ll = _areaLayer.getLatLngs ? _areaLayer.getLatLngs() : [];
+  const poly = Array.isArray(ll[0]) ? ll[0] : ll;
+  return mapPointInPoly(lat, lon, poly);
+}
+
+function mapClearArea() {
+  _areaFilterActive = false;
+  _areaLayer = null;
+  if (_drawGroup) _drawGroup.clearLayers();
+  const bar = document.getElementById('mapAreaBar');
+  if (bar) bar.style.display = 'none';
+  runSearch();
+  mapChipUpdate();
+}
+
+function mapChipUpdate() {
+  const chip = document.getElementById('mapChip'); if (!chip) return;
+  const pinned = Object.keys(_pinnedMarkers).length;
+  if (_areaFilterActive) {
+    chip.textContent = `${pinned} fijo(s) · ${currentResults.length} en área`;
+  } else {
+    chip.textContent = `${pinned} fijo(s)`;
+  }
+}
+
+function mapConfigUILoad() {
+  if (mapConfig.localTileUrl) TILE_LAYERS.local.url = mapConfig.localTileUrl;
+  const vals = {cfgTileType:mapConfig.tileType, cfgIconType:mapConfig.iconType,
+    cfgIconColor:mapConfig.iconColor, cfgPinnedColor:mapConfig.pinnedColor,
+    cfgAreaColor:mapConfig.areaColor, cfgMapZoom:mapConfig.initialZoom, cfgIconSize:mapConfig.iconSize};
+  Object.entries(vals).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
+  const chks = {cfgShowTooltips:mapConfig.showTooltips, cfgAutoFit:mapConfig.autoFit};
+  Object.entries(chks).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.checked=!!v; });
+  const lf = document.getElementById('localTileUrlField');
+  const li = document.getElementById('cfgLocalTileUrl');
+  if (lf) lf.style.display = mapConfig.tileType==='local' ? 'flex' : 'none';
+  if (li && mapConfig.localTileUrl) li.value = mapConfig.localTileUrl;
+  applyFilterScale();
+  renderHiddenColsGrid();
+  renderIconRulesList();
+  const localField = document.getElementById('localTileUrlField');
+  const localInput = document.getElementById('cfgLocalTileUrl');
+  if (localField) localField.style.display = mapConfig.tileType === 'local' ? 'flex' : 'none';
+  if (localInput && mapConfig.localTileUrl) localInput.value = mapConfig.localTileUrl;
+}
+
+function updateMapConfig() {
+  mapConfig.tileType    = document.getElementById('cfgTileType')?.value    ?? mapConfig.tileType;
+    const localField = document.getElementById('localTileUrlField');
+  if (localField) localField.style.display = mapConfig.tileType === 'local' ? 'flex' : 'none';
+  const lf2 = document.getElementById('localTileUrlField');
+  if (lf2) lf2.style.display = mapConfig.tileType==='local' ? 'flex' : 'none';
+  mapConfig.iconType    = document.getElementById('cfgIconType')?.value    ?? mapConfig.iconType;
+  mapConfig.iconColor   = document.getElementById('cfgIconColor')?.value   ?? mapConfig.iconColor;
+  mapConfig.pinnedColor = document.getElementById('cfgPinnedColor')?.value ?? mapConfig.pinnedColor;
+  mapConfig.areaColor   = document.getElementById('cfgAreaColor')?.value   ?? mapConfig.areaColor;
+  mapConfig.initialZoom = parseInt(document.getElementById('cfgMapZoom')?.value)||5;
+  mapConfig.iconSize    = parseInt(document.getElementById('cfgIconSize')?.value)||14;
+  mapConfig.showTooltips= !!document.getElementById('cfgShowTooltips')?.checked;
+  mapConfig.autoFit     = !!document.getElementById('cfgAutoFit')?.checked;
+  localStorage.setItem('sig_map_cfg', JSON.stringify(mapConfig));
+  mapApplyTiles();
+  if (_map) _map.setZoom(mapConfig.initialZoom);
+  if (_drawGroup) _drawGroup.eachLayer(l=>{ if(l.setStyle) l.setStyle({color:mapConfig.areaColor}); });
+  // Refresh pinned icons with new style
+  const saved = Object.entries(_pinnedMarkers).map(([id,m])=>({id, ll:m.getLatLng()}));
+  Object.keys(_pinnedMarkers).forEach(k=>{ if(_map) _map.removeLayer(_pinnedMarkers[k]); });
+  _pinnedMarkers = {};
+  saved.forEach(({id,ll})=>{
+    const row = rows.find(r=>String(r.id)===String(id));
+    const lbl = row ? String(row.emisor||row.id||'').replace(/'/g,"&#39;") : id;
+    mapPinToggle(id, ll.lat, ll.lng, lbl, true);
+    const cb = document.querySelector(`#resultsBody tr[data-rid="${id}"] .map-pin-cb`);
+    if (cb) cb.checked = true;
+  });
+  showNotif('Configuración de mapa guardada','success');
+}
+
+function updateLocalTileUrl() {
+  const val = document.getElementById('cfgLocalTileUrl')?.value?.trim();
+  if (!val) return;
+  mapConfig.localTileUrl = val;
+  TILE_LAYERS.local.url = val;
+  localStorage.setItem('sig_map_cfg', JSON.stringify(mapConfig));
+  if (mapConfig.tileType === 'local') mapApplyTiles();
+}
+
+// ============================================================
+// COLUMN DRAG-REORDER
+// ============================================================
+function colDragStart(e, key) {
+  _dragSrcKey = key;
+  e.currentTarget.classList.add('drag-source');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', key);
+}
+function colDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function colDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function colDrop(e, targetKey) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  document.querySelectorAll('th.drag-source').forEach(el=>el.classList.remove('drag-source'));
+  if (!_dragSrcKey || _dragSrcKey === targetKey) { _dragSrcKey=null; return; }
+  const srcIdx = columns.findIndex(c=>c.key===_dragSrcKey);
+  const tgtIdx = columns.findIndex(c=>c.key===targetKey);
+  if (srcIdx<0||tgtIdx<0) { _dragSrcKey=null; return; }
+  if (['fav','id'].includes(columns[srcIdx].type) || ['fav','id'].includes(columns[tgtIdx].type)) { _dragSrcKey=null; return; }
+  const [moved] = columns.splice(srcIdx, 1);
+  columns.splice(tgtIdx, 0, moved);
+  _dragSrcKey = null;
+  setUnsaved(true);
+  renderRepoTable();
+  renderColFilters();
+  runSearch();
+}
+
+
+// ============================================================
+// PROFILES
+// ============================================================
+function profileSaveCurrent() {
+  if (!profiles[currentProfile]) profiles[currentProfile] = {};
+  profiles[currentProfile].rows       = JSON.parse(JSON.stringify(rows));
+  profiles[currentProfile].columns    = JSON.parse(JSON.stringify(columns));
+  profiles[currentProfile].colorRules = JSON.parse(JSON.stringify(colorRules));
+  profiles[currentProfile].hiddenCols = JSON.parse(JSON.stringify(hiddenCols));
+  profiles[currentProfile].iconRules  = JSON.parse(JSON.stringify(iconRules));
+  profiles[currentProfile].filterScale= filterScale;
+  profiles[currentProfile].mapConfig  = JSON.parse(JSON.stringify(mapConfig));
+  profiles[currentProfile].name       = currentProfile;
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+}
+
+function profileLoad(name) {
+  const p = profiles[name];
+  if (!p) return;
+  if (p.rows)       rows       = JSON.parse(JSON.stringify(p.rows));
+  if (p.columns)    columns    = JSON.parse(JSON.stringify(p.columns));
+  if (p.colorRules) colorRules = JSON.parse(JSON.stringify(p.colorRules));
+  if (p.hiddenCols) hiddenCols = JSON.parse(JSON.stringify(p.hiddenCols));
+  if (p.iconRules)  iconRules  = JSON.parse(JSON.stringify(p.iconRules));
+  if (p.filterScale) { filterScale = p.filterScale; applyFilterScale(); }
+  if (p.mapConfig)  { Object.assign(mapConfig, p.mapConfig); if (typeof mapApplyTiles==='function') mapApplyTiles(); if (typeof mapConfigUILoad==='function') mapConfigUILoad(); }
+  renderHiddenColsGrid();
+  renderIconRulesList();
+}
+
+function switchProfile(name) {
+  if (!name || name === currentProfile) return;
+  profileSaveCurrent();
+  currentProfile = name;
+  localStorage.setItem('sig_current_profile', name);
+  profileLoad(name);
+  renderRepoTable();
+  renderColFilters();
+  if (typeof renderColorRules === 'function') renderColorRules();
+  runSearch();
+  renderSavedSearches();
+  renderProfileSelector();
+  showNotif('Perfil cargado: ' + name, 'success');
+}
+
+function createProfile() {
+  const inp = document.getElementById('newProfileName');
+  const name = (inp.value || '').trim();
+  if (!name) { showNotif('Introduce un nombre de perfil', 'error'); return; }
+  if (profiles[name]) { showNotif('Ya existe un perfil con ese nombre', 'error'); return; }
+  profileSaveCurrent();
+  const defaultCols = columns.map(c => ({...c}));
+  profiles[name] = { name, rows: [], columns: defaultCols, colorRules: [] };
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  inp.value = '';
+  currentProfile = name;
+  localStorage.setItem('sig_current_profile', name);
+  profileLoad(name);
+  renderRepoTable(); renderColFilters(); runSearch();
+  renderProfileSelector();
+  renderProfileList();
+  showNotif('Perfil creado: ' + name, 'success');
+}
+
+function deleteProfile(name) {
+  if (Object.keys(profiles).length <= 1) { showNotif('No puedes eliminar el único perfil', 'error'); return; }
+  if (!confirm('¿Eliminar el perfil "' + name + '" y todos sus datos?')) return;
+  delete profiles[name];
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  if (currentProfile === name) {
+    currentProfile = Object.keys(profiles)[0];
+    localStorage.setItem('sig_current_profile', currentProfile);
+    profileLoad(currentProfile);
+    renderRepoTable(); renderColFilters(); runSearch();
+  }
+  renderProfileSelector();
+  renderProfileList();
+  showNotif('Perfil eliminado: ' + name, 'success');
+}
+
+function renameProfile(oldName) {
+  const newName = prompt('Nuevo nombre para el perfil:', oldName);
+  if (!newName || newName === oldName) return;
+  if (profiles[newName]) { showNotif('Ya existe un perfil con ese nombre', 'error'); return; }
+  profiles[newName] = profiles[oldName];
+  profiles[newName].name = newName;
+  delete profiles[oldName];
+  if (currentProfile === oldName) {
+    currentProfile = newName;
+    localStorage.setItem('sig_current_profile', newName);
+  }
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  renderProfileSelector();
+  renderProfileList();
+  showNotif('Perfil renombrado: ' + newName, 'success');
+}
+
+function renderProfileSelector() {
+  const sel = document.getElementById('profileSelect');
+  if (!sel) return;
+  sel.innerHTML = Object.keys(profiles).map(k =>
+    `<option value="${k}" ${k===currentProfile?'selected':''}>${k}</option>`
+  ).join('');
+}
+
+function renderProfileList() {
+  const list = document.getElementById('profileList');
+  const active = document.getElementById('activeProfileName');
+  if (!list) return;
+  if (active) active.textContent = currentProfile;
+  list.innerHTML = Object.keys(profiles).map(k => `
+    <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px">
+      <span style="flex:1;font-size:12px;font-weight:${k===currentProfile?'700':'400'};color:${k===currentProfile?'var(--accent)':'var(--text)'}">${k}${k===currentProfile?' ✓':''}</span>
+      <span style="font-size:11px;color:var(--text3)">${((profiles[k]||{}).rows||[]).length} filas</span>
+      <button class="btn btn-secondary btn-sm" onclick="switchProfile('${k}');closeModal('profileModal')">Cargar</button>
+      <button class="btn btn-secondary btn-sm" onclick="renameProfile('${k}')">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteProfile('${k}')" ${Object.keys(profiles).length<=1?'disabled':''}>✕</button>
+    </div>`).join('');
+}
+
+function openProfileModal() {
+  renderProfileList();
+  openModal('profileModal');
+}
+
+function profilesInit() {
+  // Bootstrap default profile if none exist
+  if (!profiles['default']) {
+    profiles['default'] = {
+      name: 'default',
+      rows: JSON.parse(JSON.stringify(rows)),
+      columns: JSON.parse(JSON.stringify(columns)),
+      colorRules: JSON.parse(JSON.stringify(colorRules))
+    };
+    localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  }
+  // If current profile exists, load it (it may differ from localStorage rows)
+  if (profiles[currentProfile]) profileLoad(currentProfile);
+  renderProfileSelector();
+}
+
+// ============================================================
+// MAP – PINNED MARKER WITH POPUP
+// ============================================================
+function mapMakePinnedMarker(rowId, lat, lon, label, rowData) {
+  if (!_map) return null;
+  const m = L.marker([lat, lon], { icon: mapMakeIcon(true), zIndexOffset: 500 }).addTo(_map);
+  if (mapConfig.showTooltips && label) m.bindTooltip(label, { permanent: false, direction: 'top' });
+  // Build popup table
+  const fields = columns.filter(c => c.type !== 'fav');
+  let html = '<div style="font-size:12px;min-width:200px;max-width:290px">'
+    + '<div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#4f8ef7">' + label + '</div>'
+    + '<table style="border-collapse:collapse;width:100%">';
+  fields.forEach(c => {
+    const v = rowData[c.key] != null && rowData[c.key] !== '' ? rowData[c.key] : '—';
+    html += '<tr>'
+      + '<td style="padding:2px 8px 2px 0;color:#999;font-size:11px;white-space:nowrap;vertical-align:top">' + c.label + '</td>'
+      + '<td style="padding:2px 0;font-size:11px;word-break:break-word">' + v + '</td>'
+      + '</tr>';
+  });
+  html += '</table></div>';
+  m.bindPopup(html, { maxWidth: 320, className: 'map-popup' });
+  m.on('click', () => m.openPopup());
+  return m;
+}
+
+// ============================================================
+// MAP EXPORT
+// ============================================================
+function exportMapImage() {
+  if (!_map) { showNotif('El mapa no está inicializado', 'error'); return; }
+  showNotif('Generando imagen del mapa…', '');
+  if (typeof leafletImage !== 'undefined') {
+    leafletImage(_map, function(err, canvas) {
+      if (err) { showNotif('Error al exportar: ' + err, 'error'); return; }
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'signal-map-' + new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showNotif('Mapa exportado como PNG', 'success');
+    });
+  } else {
+    showNotif('Librería de exportación no disponible. Usa Ctrl+Shift+S o la captura nativa del navegador.', 'error');
+  }
+}
+
+// ============================================================
+// LOCAL TILES – REFERENCE (no code change needed)
+// ============================================================
+// Para activar tiles locales selecciona "📁 Tiles locales" en Configuración
+// y ajusta la URL en TILE_LAYERS.local según tu caso:
+//
+// A) TileServer-GL en localhost:
+//    url: 'http://localhost:8080/styles/osm-bright/{z}/{x}/{y}.jpg'
+//
+// B) Carpeta tiles/ junto al HTML (descargados con SAS.Planet / MOBAC):
+//    url: 'tiles/{z}/{x}/{y}.jpg'   ← valor por defecto
+//
+// C) MBTiles vía servidor local (mbview, tileserver-lite):
+//    url: 'http://localhost:3000/{z}/{x}/{y}.jpg'
+
+
+// ============================================================
+// PROFILES
+// ============================================================
+function profileSaveCurrent() {
+  if (!profiles[currentProfile]) profiles[currentProfile] = {};
+  profiles[currentProfile].rows       = JSON.parse(JSON.stringify(rows));
+  profiles[currentProfile].columns    = JSON.parse(JSON.stringify(columns));
+  profiles[currentProfile].colorRules = JSON.parse(JSON.stringify(colorRules));
+  profiles[currentProfile].hiddenCols = JSON.parse(JSON.stringify(hiddenCols));
+  profiles[currentProfile].iconRules  = JSON.parse(JSON.stringify(iconRules));
+  profiles[currentProfile].filterScale= filterScale;
+  profiles[currentProfile].mapConfig  = JSON.parse(JSON.stringify(mapConfig));
+  profiles[currentProfile].name       = currentProfile;
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+}
+
+function profileLoad(name) {
+  const p = profiles[name];
+  if (!p) return;
+  if (p.rows)       rows       = JSON.parse(JSON.stringify(p.rows));
+  if (p.columns)    columns    = JSON.parse(JSON.stringify(p.columns));
+  if (p.colorRules) colorRules = JSON.parse(JSON.stringify(p.colorRules));
+  if (p.hiddenCols) { hiddenCols = JSON.parse(JSON.stringify(p.hiddenCols)); localStorage.setItem('sig_hidden_cols', JSON.stringify(hiddenCols)); }
+  if (p.iconRules)  { iconRules  = JSON.parse(JSON.stringify(p.iconRules));  localStorage.setItem('sig_icon_rules',  JSON.stringify(iconRules)); }
+  if (p.filterScale != null) { filterScale = p.filterScale; localStorage.setItem('sig_filter_scale', filterScale); applyFilterScale(); }
+  if (p.mapConfig)  { Object.assign(mapConfig, p.mapConfig); localStorage.setItem('sig_map_cfg', JSON.stringify(mapConfig)); if (typeof mapApplyTiles==='function') mapApplyTiles(); if (typeof mapConfigUILoad==='function') mapConfigUILoad(); }
+  renderHiddenColsGrid();
+  renderIconRulesList();
+}
+
+function switchProfile(name) {
+  if (!name || name === currentProfile) return;
+  profileSaveCurrent();
+  currentProfile = name;
+  localStorage.setItem('sig_current_profile', name);
+  profileLoad(name);
+  renderRepoTable(); renderColFilters();
+  if (typeof renderColorRules === 'function') renderColorRules();
+  runSearch(); renderSavedSearches(); renderProfileSelector();
+  showNotif('Perfil cargado: ' + name, 'success');
+}
+
+function createProfile() {
+  const inp = document.getElementById('newProfileName');
+  const name = (inp.value || '').trim();
+  if (!name) { showNotif('Introduce un nombre de perfil', 'error'); return; }
+  if (profiles[name]) { showNotif('Ya existe un perfil con ese nombre', 'error'); return; }
+  profileSaveCurrent();
+  profiles[name] = { name, rows: [], columns: columns.map(c=>({...c})), colorRules: [], hiddenCols: [], iconRules: [], filterScale: 1 };
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  inp.value = '';
+  currentProfile = name;
+  localStorage.setItem('sig_current_profile', name);
+  profileLoad(name);
+  renderRepoTable(); renderColFilters(); runSearch();
+  renderProfileSelector(); renderProfileList();
+  showNotif('Perfil creado: ' + name, 'success');
+}
+
+function deleteProfile(name) {
+  if (Object.keys(profiles).length <= 1) { showNotif('No puedes eliminar el único perfil', 'error'); return; }
+  if (!confirm('¿Eliminar el perfil "' + name + '" y todos sus datos?')) return;
+  delete profiles[name];
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  if (currentProfile === name) {
+    currentProfile = Object.keys(profiles)[0];
+    localStorage.setItem('sig_current_profile', currentProfile);
+    profileLoad(currentProfile);
+    renderRepoTable(); renderColFilters(); runSearch();
+  }
+  renderProfileSelector(); renderProfileList();
+  showNotif('Perfil eliminado: ' + name, 'success');
+}
+
+function renameProfile(oldName) {
+  const newName = prompt('Nuevo nombre para el perfil:', oldName);
+  if (!newName || newName.trim() === oldName) return;
+  const nn = newName.trim();
+  if (profiles[nn]) { showNotif('Ya existe un perfil con ese nombre', 'error'); return; }
+  profiles[nn] = profiles[oldName]; profiles[nn].name = nn;
+  delete profiles[oldName];
+  if (currentProfile === oldName) { currentProfile = nn; localStorage.setItem('sig_current_profile', nn); }
+  localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  renderProfileSelector(); renderProfileList();
+  showNotif('Perfil renombrado a: ' + nn, 'success');
+}
+
+function renderProfileSelector() {
+  const sel = document.getElementById('profileSelect'); if (!sel) return;
+  sel.innerHTML = Object.keys(profiles).map(k =>
+    `<option value="${k}" ${k===currentProfile?'selected':''}>${k}</option>`).join('');
+}
+
+function renderProfileList() {
+  const list = document.getElementById('profileList');
+  const active = document.getElementById('activeProfileName');
+  if (!list) return;
+  if (active) active.textContent = currentProfile;
+  list.innerHTML = Object.keys(profiles).map(k => `
+    <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px">
+      <span style="flex:1;font-size:12px;font-weight:${k===currentProfile?700:400};color:${k===currentProfile?'var(--accent)':'var(--text)'}">${k}${k===currentProfile?' ✓':''}</span>
+      <span style="font-size:11px;color:var(--text3)">${((profiles[k]||{}).rows||[]).length} filas</span>
+      <button class="btn btn-secondary btn-sm" onclick="switchProfile('${k}');closeModal('profileModal')">Cargar</button>
+      <button class="btn btn-secondary btn-sm" onclick="renameProfile('${k}')">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteProfile('${k}')" ${Object.keys(profiles).length<=1?'disabled':''}>✕</button>
+    </div>`).join('');
+}
+
+function openProfileModal() { renderProfileList(); openModal('profileModal'); }
+
+function profilesInit() {
+  if (!profiles['default']) {
+    profiles['default'] = { name:'default', rows:JSON.parse(JSON.stringify(rows)), columns:JSON.parse(JSON.stringify(columns)), colorRules:JSON.parse(JSON.stringify(colorRules)), hiddenCols:[], iconRules:[], filterScale:1 };
+    localStorage.setItem('sig_profiles', JSON.stringify(profiles));
+  }
+  if (profiles[currentProfile]) profileLoad(currentProfile);
+  renderProfileSelector();
+  renderHiddenColsGrid();
+  renderIconRulesList();
+  applyFilterScale();
+}
+
+// ============================================================
+// FILTER SCALE
+// ============================================================
+function applyFilterScale() {
+  const cf = document.getElementById('colFilters');
+  if (cf) {
+    // Reset transform first to measure natural height accurately
+    cf.style.transform = '';
+    cf.style.marginBottom = '';
+    const naturalH = cf.getBoundingClientRect().height;
+    cf.style.transform = `scale(${filterScale})`;
+    cf.style.transformOrigin = 'top left';
+    // Push down everything below by the extra height gained
+    cf.style.marginBottom = Math.round(naturalH * (filterScale - 1)) + 'px';
+    // Also expand the left pane width compensation
+    cf.style.width = Math.round(100 / filterScale) + '%';
+  }
+  const slider = document.getElementById('cfgFilterScale');
+  if (slider) {
+    slider.value = filterScale;
+    const lbl = document.getElementById('cfgFilterScaleVal');
+    if (lbl) lbl.textContent = Math.round(filterScale * 100) + '%';
+  }
+  localStorage.setItem('sig_filter_scale', filterScale);
+}
+
+// ============================================================
+// HIDDEN COLUMNS IN RESULTS
+// ============================================================
+function renderHiddenColsGrid() {
+  const grid = document.getElementById('hiddenColsGrid'); if (!grid) return;
+  const cols = columns.filter(c => c.type !== 'fav' && c.type !== 'id');
+  grid.innerHTML = cols.map(c => `
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:4px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:5px">
+      <input type="checkbox" ${hiddenCols.includes(c.key)?'checked':''} onchange="toggleHiddenCol('${c.key}',this.checked)">
+      <span style="color:${hiddenCols.includes(c.key)?'var(--text3)':'var(--text)'}">${c.label}</span>
+    </label>`).join('');
+}
+
+function toggleHiddenCol(key, hide) {
+  if (hide) { if (!hiddenCols.includes(key)) hiddenCols.push(key); }
+  else hiddenCols = hiddenCols.filter(k => k !== key);
+  localStorage.setItem('sig_hidden_cols', JSON.stringify(hiddenCols));
+  renderHiddenColsGrid();
+  renderColFilters();
+  runSearch();
+}
+
+// ============================================================
+// ICON RULES
+// ============================================================
+function addIconRule() {
+  const fileInp  = document.getElementById('iconRuleFile');
+  const ids      = (document.getElementById('iconRuleIds').value  || '').trim();
+  const frMin    = parseFloat(document.getElementById('iconRuleFrMin').value);
+  const frMax    = parseFloat(document.getElementById('iconRuleFrMax').value);
+  const size     = parseInt(document.getElementById('iconRuleSize').value) || 28;
+  const file     = fileInp.files[0];
+
+  if (!file) { showNotif('Selecciona una imagen', 'error'); return; }
+  if (!ids && isNaN(frMin) && isNaN(frMax)) { showNotif('Define al menos IDs o un rango de FR', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rule = {
+      id: Date.now(),
+      dataUrl: e.target.result,
+      filename: file.name,
+      ids: ids ? ids.split(',').map(s=>s.trim()).filter(Boolean) : [],
+      frMin: isNaN(frMin) ? null : frMin,
+      frMax: isNaN(frMax) ? null : frMax,
+      size
+    };
+    iconRules.push(rule);
+    localStorage.setItem('sig_icon_rules', JSON.stringify(iconRules));
+    renderIconRulesList();
+    // reset form
+    fileInp.value=''; document.getElementById('iconRuleIds').value='';
+    document.getElementById('iconRuleFrMin').value=''; document.getElementById('iconRuleFrMax').value='';
+    document.getElementById('iconRuleSize').value='28';
+    showNotif('Regla de icono añadida', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteIconRule(ruleId) {
+  iconRules = iconRules.filter(r => r.id !== ruleId);
+  localStorage.setItem('sig_icon_rules', JSON.stringify(iconRules));
+  renderIconRulesList();
+}
+
+function renderIconRulesList() {
+  const list = document.getElementById('iconRulesList'); if (!list) return;
+  if (!iconRules.length) { list.innerHTML = '<span style="font-size:11px;color:var(--text3)">Sin reglas definidas.</span>'; return; }
+  list.innerHTML = iconRules.map(r => `
+    <div class="icon-rule-row">
+      <img class="icon-rule-preview" src="${r.dataUrl}" alt="icon">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:600">${r.filename}</div>
+        <div style="font-size:10px;color:var(--text3)">
+          ${r.ids.length ? 'IDs: '+r.ids.join(', ') : ''}
+          ${r.frMin!=null||r.frMax!=null ? ' | FR: '+(r.frMin??'*')+' – '+(r.frMax??'*')+' MHz' : ''}
+          | ${r.size}px
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteIconRule(${r.id})">✕</button>
+    </div>`).join('');
+}
+
+function getIconRuleForRow(rowData) {
+  const fr = parseFloat(rowData.fr);
+  const id = String(rowData.id || '');
+  for (const rule of iconRules) {
+    const matchId = rule.ids.length > 0 && rule.ids.includes(id);
+    const matchFr = (rule.frMin != null || rule.frMax != null) && !isNaN(fr) &&
+      (rule.frMin == null || fr >= rule.frMin) &&
+      (rule.frMax == null || fr <= rule.frMax);
+    if (matchId || matchFr) return rule;
+  }
+  return null;
+}
+
+// ============================================================
+// MAP – PINNED MARKER WITH POPUP + CUSTOM ICON RULES
+// ============================================================
+function mapMakePinnedMarker(rowId, lat, lon, label, rowData) {
+  if (!_map) return null;
+
+  // Check icon rules first
+  const rule = getIconRuleForRow(rowData);
+  let icon;
+  if (rule) {
+    const s = rule.size || 28;
+    icon = L.icon({ iconUrl: rule.dataUrl, iconSize:[s,s], iconAnchor:[s/2,s/2], popupAnchor:[0,-s/2] });
+  } else {
+    icon = mapMakeIcon(true);
+  }
+
+  const m = L.marker([lat, lon], { icon, zIndexOffset: 500 }).addTo(_map);
+  if (mapConfig.showTooltips && label) m.bindTooltip(label, { permanent:false, direction:'top' });
+
+  // Popup with row data
+  const fields = columns.filter(c => c.type !== 'fav');
+  let html = '<div style="font-size:12px;min-width:200px;max-width:300px">'
+    + '<div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#4f8ef7">' + label + '</div>'
+    + '<table style="border-collapse:collapse;width:100%">';
+  fields.forEach(c => {
+    const v = rowData[c.key] != null && rowData[c.key] !== '' ? rowData[c.key] : '—';
+    html += '<tr>'
+      + '<td style="padding:2px 8px 2px 0;color:#999;font-size:11px;white-space:nowrap;vertical-align:top">' + c.label + '</td>'
+      + '<td style="padding:2px 0;font-size:11px;word-break:break-word">' + v + '</td>'
+      + '</tr>';
+  });
+  html += '</table></div>';
+  m.bindPopup(html, { maxWidth:320, className:'map-popup' });
+  m.on('click', () => m.openPopup());
+  return m;
+}
+
+// ============================================================
+// MAP EXPORT (with CircleMarker fallback for SVG icons)
+// ============================================================
+function exportMapImage() {
+  if (!_map) { showNotif('El mapa no está inicializado', 'error'); return; }
+  showNotif('Generando imagen…', '');
+  const tempMarkers = [];
+  Object.entries(_pinnedMarkers).forEach(([id, m]) => {
+    const ll = m.getLatLng();
+    const rowData = rows.find(r=>String(r.id)===String(id)) || {};
+    const rule = getIconRuleForRow(rowData);
+    if (rule) {
+      // Use image icon directly – leaflet-image handles <img> fine
+      const cm = L.marker(ll, { icon: L.icon({ iconUrl:rule.dataUrl, iconSize:[rule.size,rule.size], iconAnchor:[rule.size/2,rule.size/2] }) }).addTo(_map);
+      tempMarkers.push({ marker: cm, original: m, replace: true });
+    } else {
+      const color = mapConfig.pinnedColor || '#f5a623';
+      const cm = L.circleMarker(ll, { radius: parseInt(mapConfig.iconSize)||10, fillColor:color, color:'#fff', weight:2, opacity:1, fillOpacity:0.9 }).addTo(_map);
+      tempMarkers.push({ marker: cm, replace: true });
+    }
+    _map.removeLayer(m);
+  });
+  if (_hoverMarker) _map.removeLayer(_hoverMarker);
+
+  setTimeout(() => {
+    if (typeof leafletImage !== 'undefined') {
+      leafletImage(_map, function(err, canvas) {
+        // Restore originals
+        tempMarkers.forEach(t => {
+          _map.removeLayer(t.marker);
+          if (t.original) t.original.addTo(_map);
+        });
+        if (err) { showNotif('Error al exportar: ' + err, 'error'); return; }
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'signal-map-' + new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showNotif('Mapa exportado como PNG', 'success');
+      });
+    } else {
+      tempMarkers.forEach(t => { _map.removeLayer(t.marker); if(t.original) t.original.addTo(_map); });
+      showNotif('Librería no disponible. Usa la captura nativa del navegador.', 'error');
+    }
+  }, 200);
+}
+
+// ============================================================
+// LOCAL TILES
+// ============================================================
+function updateLocalTileUrl() {
+  const val = (document.getElementById('cfgLocalTileUrl')?.value || '').trim();
+  if (!val) return;
+  mapConfig.localTileUrl = val;
+  TILE_LAYERS.local.url = val;
+  localStorage.setItem('sig_map_cfg', JSON.stringify(mapConfig));
+  if (mapConfig.tileType === 'local') mapApplyTiles();
+}
+
+init();
+</script>
+</body>
+</html>
